@@ -1,11 +1,11 @@
-# ⚡ GitPulse
+# GitPulse
 
 <div align="center">
 
-![GitPulse Banner](https://raw.githubusercontent.com/octodev/pulse-ui/main/assets/banner.png)
+![GitPulse Banner](assets/banner.png)
 
 **A high-performance, cross-platform GitHub analytics and telemetry dashboard.**  
-*Engineered for Android (phones, foldables, tablets), Native Linux Desktop, Windows, and Modern Browsers.*
+*Engineered for Android (smartphones, foldables, tablets), Native Linux Desktop, Windows, and Web.*
 
 [![React](https://img.shields.io/badge/React-19.0-61dafb.svg?style=flat-square&logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178c6.svg?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
@@ -15,53 +15,67 @@
 [![Tauri](https://img.shields.io/badge/Tauri-2.0-FFC131.svg?style=flat-square&logo=tauri)](https://tauri.app/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 
-[Features](#-features) • [Screenshots](#-screenshots--themes) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [Android Build](#-building-for-android) • [Linux Desktop Build](#-building-for-linux-desktop) • [License](#-license)
+[Features](#features) • [Screenshots](#screenshots) • [Architecture](#architecture) • [Getting Started](#getting-started) • [Android Build](#building-for-android) • [Linux Desktop Build](#building-for-linux-desktop) • [License](#license)
 
 </div>
 
 ---
 
-## 📖 Overview
+## Overview
 
-**GitPulse** is a lightweight, responsive GitHub statistics and velocity tracker built to give developers, maintainers, and engineering leads instant visibility into their open-source portfolios and private repositories.
+**GitPulse** is a lightweight, responsive GitHub statistics and development velocity tracker designed to give developers, maintainers, and engineering teams instant clarity over their public and private repositories.
 
-Unlike traditional web dashboards, GitPulse is engineered from the ground up for **multi-device ergonomics**:
-* 📱 **Standard Smartphones**: Single-thumb bottom navigation, touch-optimized swipeable cards, and safe-area notch awareness.
-* 📖 **Foldables & Flip Phones**: Dynamically adapts when unfolding (e.g. Samsung Galaxy Z Fold, Google Pixel Fold) transitioning between compact and expanded navigation rail layouts without reloading.
-* 💻 **Tablets & Desktop**: Persistent sidebar, multi-column metric grids, and master-detail comparison matrices.
+GitPulse is built specifically for **multi-device ergonomics**:
+* **Smartphones**: Single-thumb bottom navigation, touch-optimized swipeable cards, and full safe-area notch support.
+* **Foldables & Flip Phones**: Dynamically transitions when folding or unfolding (e.g. Samsung Galaxy Z Fold, Google Pixel Fold) between compact and expanded navigation rail layouts without reloading state.
+* **Tablets & Desktop**: Persistent sidebar, multi-column analytics grid, and side-by-side comparison views.
 
 ---
 
-## ✨ Features
+## Screenshots
 
-### 📊 Comprehensive Telemetry & Analytics
-* ⭐ **Community Traction**: Track Stars, Watchers, and Network Forks across multiple repositories in real-time.
-* 📥 **Release & Binary Download Tracker**: Aggregates asset download counts across every published release tag (`.AppImage`, `.deb`, `.exe`, `.dmg`, `.aar`, `.whl`).
-* 🔀 **Pull Request Resolution Funnel**: Monitor Open vs. Merged vs. Closed PR velocity and merge turnaround times.
-* 🐞 **Issue Health & Velocity**: Real-time open backlog vs. resolved issue ratios.
-* 💬 **Discussions & Comments**: Full GraphQL v4 integration to monitor discussion threads, community comments, and topic upvotes.
-* 📈 **Annual Commit Velocity**: 52-week activity charts tracking weekly push frequency and code momentum.
-* 🌐 **Traffic Views & Unique Visitors**: 14-day history of repository page visits and unique visitor telemetry.
-* 💻 **Language Composition**: Multi-language byte-ratio breakdowns and primary language classifiers.
+<div align="center">
 
-### 🔍 Repository Deep-Dive Modal
+### Main Analytics Dashboard (GitHub Dark)
+![GitPulse Dashboard](assets/dashboard_preview.png)
+
+### Retro CRT Terminal Mode (Phosphor Green with Scanlines)
+![GitPulse Retro CRT](assets/retro_crt_preview.png)
+
+</div>
+
+---
+
+## Features
+
+### Telemetry & Analytics
+* **Community Traction**: Track Stars, Watchers, and Network Forks across multiple repositories in real-time.
+* **Release & Binary Downloads**: Aggregates asset download counts across every published release tag (`.AppImage`, `.deb`, `.exe`, `.dmg`, `.aar`, `.whl`).
+* **Pull Request Resolution Funnel**: Monitor Open vs. Merged vs. Closed PR velocity and merge turnaround times.
+* **Issue Health & Backlog Velocity**: Real-time open backlog vs. resolved issue ratios.
+* **Discussions & Comments**: Full GraphQL v4 integration to monitor discussion threads, community comments, and topic upvotes.
+* **Annual Commit Velocity**: 52-week activity charts tracking weekly push frequency and code momentum.
+* **Traffic Views & Unique Visitors**: 14-day history of repository page visits and unique visitor telemetry.
+* **Language Composition**: Multi-language byte-ratio breakdowns and primary language classifiers.
+
+### Repository Deep-Dive Modal
 * **Interactive Filtering**: Filter Pull Requests (`All`, `Open`, `Merged`) and Issues (`All`, `Open`, `Closed`).
 * **Unfoldable Comment Threads**: Click any Issue, PR, or Discussion to unfold full descriptions and inspect threaded review comments, author avatars, and timestamps.
 * **Unicode Emoji Parsing**: Automatic translation of GitHub shortcodes (e.g. `:bulb:`, `:raised_hands:`, `:tada:`) into native rendered emojis.
 * **Release Download Curves**: Smooth dual-curve telemetry plots comparing tag downloads against cumulative download trajectories.
 
-### 🎨 Dynamic Multi-Theme Engine
-Switch instantly between 6 hand-crafted palettes tailored for any environment:
-1. **GitHub Dark**: Authentic GitHub slate-dark theme (`#0d1117`).
+### Dynamic Multi-Theme Engine
+Switch between 6 distinct palettes tailored for any environment:
+1. **GitHub Dark**: Classic GitHub slate-dark theme (`#0d1117`).
 2. **OLED Pure Black**: Maximum battery savings on OLED and AMOLED phone screens (`#000000`).
 3. **Retro CRT Terminal**: Vintage 80s phosphor bright green (`#33ff57`) on deep CRT black (`#050d08`) with realistic animated scanlines and phosphor glow.
-4. **Dracula**: Iconic high-contrast dark theme with neon cyan, green, and pink accents (`#282a36`).
+4. **Dracula**: High-contrast dark theme with neon cyan, green, and pink accents (`#282a36`).
 5. **Nord Blue**: Arctic slate palette with cool frost accents (`#181c24`).
-6. **Light Mode**: Clean, crisp daytime palette with high-contrast text (`#f6f8fa`).
+6. **Light Mode**: Clean daytime palette with high-contrast text (`#f6f8fa`).
 
 ---
 
-## 📐 Adaptive Responsive Layout
+## Adaptive Layout Matrix
 
 | Form Factor | Screen Width | Layout Strategy |
 | :--- | :--- | :--- |
@@ -71,17 +85,17 @@ Switch instantly between 6 hand-crafted palettes tailored for any environment:
 
 ---
 
-## 🛠️ Architecture & Tech Stack
+## Architecture
 
 ```text
 ┌────────────────────────────────────────────────────────┐
-│                   GitPulse UI Layer                   │
+│                   GitPulse UI Layer                    │
 │    (React 19 + TypeScript + Tailwind CSS + Recharts)   │
 └──────────────┬──────────────────────────┬──────────────┘
                │                          │
    ┌───────────▼───────────┐  ┌───────────▼───────────┐
-   │     Capacitor 6       │  │       Tauri 2.0       │
-   │   Android Runtime     │  │  Rust Native Desktop  │
+   │      Capacitor 6      │  │       Tauri 2.0       │
+   │    Android Runtime    │  │  Rust Native Desktop  │
    │ (APK / AAB / Foldable)│  │ (Linux .deb / AppImage│
    │                       │  │  Windows .msi / .exe) │
    └───────────┬───────────┘  └───────────┬───────────┘
@@ -95,20 +109,20 @@ Switch instantly between 6 hand-crafted palettes tailored for any environment:
              └───────────────────────────┘
 ```
 
-* **Frontend Engine**: [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/)
-* **Styling & Theming**: [Tailwind CSS](https://tailwindcss.com/) with space-separated dynamic CSS variable channels
-* **Data Visualization**: [Recharts](https://recharts.org/) (Responsive Area, Line, Bar, and Pie components)
-* **Mobile Runtime**: [Capacitor 6](https://capacitorjs.com/) (Edge-to-edge Android display, Safe Area insets)
-* **Desktop Runtime**: [Tauri 2.0](https://tauri.app/) (Rust + WebKitGTK / WebView2)
-* **API Integration**: Octokit-compatible REST v3 + GitHub GraphQL v4 endpoints with offline LocalStorage caching and 1-click Demo Mode
+* **Frontend**: React 19, TypeScript, Vite
+* **Styling**: Tailwind CSS with space-separated dynamic CSS variable channels
+* **Data Visualization**: Recharts (Responsive Area, Line, Bar, and Pie components)
+* **Mobile Runtime**: Capacitor 6 (Edge-to-edge Android display, Safe Area insets)
+* **Desktop Runtime**: Tauri 2.0 (Rust + WebKitGTK / WebView2)
+* **API Integration**: REST v3 + GitHub GraphQL v4 with offline LocalStorage caching and 1-click Demo Mode
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
-* [Node.js](https://nodejs.org/) (v18+ or v20+)
-* [npm](https://www.npmjs.com/) or [pnpm](https://pnpm.io/)
+* Node.js (v18+ or v20+)
+* npm or pnpm
 
 ### Installation
 
@@ -131,12 +145,12 @@ Switch instantly between 6 hand-crafted palettes tailored for any environment:
 
 ---
 
-## 📱 Building for Android
+## Building for Android
 
-GitPulse is packaged for Android via **Capacitor 6**.
+GitPulse is packaged for Android via Capacitor 6.
 
 ### 1. Requirements
-* [Android Studio](https://developer.android.com/studio) installed (or Android SDK command-line tools).
+* Android Studio installed (or Android SDK command-line tools).
 * Android device connected via USB with **USB Debugging** enabled (or an active Android Emulator).
 
 ### 2. Build & Deploy Directly to USB Phone
@@ -163,11 +177,11 @@ cd android
 
 ---
 
-## 🐧 Building for Linux Desktop
+## Building for Linux Desktop
 
-GitPulse includes a native **Tauri 2.0** desktop runner.
+GitPulse includes a native Tauri 2.0 desktop runner.
 
-### 1. Requirements (Debian/Ubuntu/Pop!_OS)
+### 1. Requirements (Debian / Ubuntu / Pop!_OS)
 ```bash
 sudo apt update
 sudo apt install -y \
@@ -198,9 +212,9 @@ Generated release outputs:
 
 ---
 
-## 🪟 Building for Windows
+## Building for Windows
 
-Run the same build script on a Windows machine:
+Run the build script on a Windows machine:
 ```powershell
 npm run desktop:build
 ```
@@ -208,7 +222,7 @@ Outputs `.msi` installers and `.exe` binaries in `src-tauri/target/release/bundl
 
 ---
 
-## ⚙️ Configuration & Environment
+## Configuration & Environment
 
 ### GitHub Authentication
 * **Personal Access Token (PAT)**: Create a classic or fine-grained token on [GitHub Tokens Settings](https://github.com/settings/tokens) with `repo` (or `public_repo`) and `read:discussion` scopes.
@@ -221,9 +235,9 @@ Outputs `.msi` installers and `.exe` binaries in `src-tauri/target/release/bundl
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-Contributions are welcome! Please make sure to follow the **Conventional Commits** standard (`feat:`, `fix:`, `chore:`, `docs:`, `style:`).
+Contributions are welcome. Please ensure that all pull requests follow the **Conventional Commits** format (`feat:`, `fix:`, `chore:`, `docs:`, `style:`).
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feat/amazing-feature`)
@@ -233,10 +247,6 @@ Contributions are welcome! Please make sure to follow the **Conventional Commits
 
 ---
 
-## 📄 License
+## License
 
 Distributed under the **MIT License**. See `LICENSE` for more information.
-
-<div align="center">
-Built with 💙 for the open-source and developer community.
-</div>
