@@ -27,6 +27,7 @@ export type AutoRefreshInterval = 'off' | '15m' | '1h' | '6h' | '24h';
 
 export interface UserAppConfig {
   theme: ThemeMode;
+  instanceUrl: string;
   trackedRepoIds: number[];
   visibleMetrics: VisibleMetricsConfig;
   autoRefresh: AutoRefreshInterval;

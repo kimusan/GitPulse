@@ -69,10 +69,16 @@ export function useConfig() {
     updateConfig({ onboardingCompleted: completed });
   }, [updateConfig]);
 
+  const setInstanceUrl = useCallback((instanceUrl: string) => {
+    StorageService.setInstanceUrl(instanceUrl);
+    updateConfig({ instanceUrl });
+  }, [updateConfig]);
+
   return {
     config,
     updateConfig,
     setTheme,
+    setInstanceUrl,
     setTrackedRepoIds,
     toggleTrackedRepo,
     toggleMetricVisibility,

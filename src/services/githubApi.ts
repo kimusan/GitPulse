@@ -3,10 +3,13 @@ import { RepoDetailedStats } from '../types/stats';
 import { StorageService } from './storageService';
 import { MOCK_USER, MOCK_REPOSITORIES, MOCK_DETAILED_STATS } from './mockDataService';
 import { GitHubGraphQLService } from './githubGraphQL';
-
-const BASE_URL = 'https://api.github.com';
+import { getRestBaseUrl } from '../utils/githubEndpoints';
 
 export class GitHubApiService {
+  private static getBaseUrl(): string {
+    return getRestBaseUrl(StorageService.getInstanceUrl());
+  }
+
   private static getHeaders(): HeadersInit {
     const token = StorageService.getAuthToken();
     const headers: Record<string, string> = {
@@ -36,9 +39,10 @@ export class GitHubApiService {
     }
   }
 
-  static async verifyToken(token: string): Promise<{ valid: boolean; user?: GitHubUser; error?: string }> {
+  static async verifyToken(token: string, instanceUrl?: string): Promise<{ valid: boolean; user?: GitHubUser; error?: string }> {
+    const baseUrl = getRestBaseUrl(instanceUrl || StorageService.getInstanceUrl());
     try {
-      const res = await fetch(`${BASE_URL}/user`, {
+      const res = await fetch(`${baseUrl}/user`, {
         headers: {
           'Accept': 'application/vnd.github.v3+json',
           'Authorization': `Bearer ${token.trim()}`
@@ -47,19 +51,19 @@ export class GitHubApiService {
       this.parseRateLimit(res);
 
       if (res.status === 401) {
-        return { valid: false, error: 'Invalid GitHub Personal Access Token. Please check token permissions.' };
+        return { valid: false, error: 'Invalid Personal Access Token. Please check token permissions.' };
       }
       if (res.status === 403) {
-        return { valid: false, error: 'GitHub API rate limit exceeded or access forbidden.' };
+        return { valid: false, error: 'API rate limit exceeded or access forbidden.' };
       }
       if (!res.ok) {
-        return { valid: false, error: `GitHub API error: ${res.statusText}` };
+        return { valid: false, error: `GitHub Server error (${res.status}): ${res.statusText}` };
       }
 
       const user: GitHubUser = await res.json();
       return { valid: true, user };
     } catch (err: unknown) {
-      return { valid: false, error: err instanceof Error ? err.message : 'Network error connecting to GitHub API' };
+      return { valid: false, error: err instanceof Error ? err.message : 'Network error connecting to GitHub Server' };
     }
   }
 
@@ -68,7 +72,7 @@ export class GitHubApiService {
       return MOCK_USER;
     }
 
-    const res = await fetch(`${BASE_URL}/user`, {
+    const res = await fetch(`${this.getBaseUrl()}/user`, {
       headers: this.getHeaders()
     });
     this.parseRateLimit(res);
@@ -91,7 +95,7 @@ export class GitHubApiService {
     const maxPages = 3; // Up to 300 repositories
 
     while (page <= maxPages) {
-      const res = await fetch(`${BASE_URL}/user/repos?per_page=100&page=${page}&sort=updated&affiliation=owner,collaborator,organization_member`, {
+      const res = await fetch(`${this.getBaseUrl()}/user/repos?per_page=100&page=${page}&sort=updated&affiliation=owner,collaborator,organization_member`, {
         headers: this.getHeaders()
       });
       this.parseRateLimit(res);
@@ -113,7 +117,7 @@ export class GitHubApiService {
 
   static async getRepoReleases(owner: string, repo: string): Promise<{ releases: GitHubRelease[]; totalDownloads: number }> {
     try {
-      const res = await fetch(`${BASE_URL}/repos/${owner}/${repo}/releases?per_page=50`, {
+      const res = await fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/releases?per_page=50`, {
         headers: this.getHeaders()
       });
       this.parseRateLimit(res);
@@ -142,7 +146,7 @@ export class GitHubApiService {
 
   static async getRepoCommitActivity(owner: string, repo: string): Promise<{ commitActivity: CommitActivityWeek[]; totalCommitsLastYear: number }> {
     try {
-      const res = await fetch(`${BASE_URL}/repos/${owner}/${repo}/stats/commit_activity`, {
+      const res = await fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/stats/commit_activity`, {
         headers: this.getHeaders()
       });
       this.parseRateLimit(res);
@@ -166,8 +170,8 @@ export class GitHubApiService {
   static async getRepoPullRequests(owner: string, repo: string): Promise<{ openCount: number; closedCount: number; mergedCount: number; list: PullRequestSummary[] }> {
     try {
       const [openRes, closedRes] = await Promise.all([
-        fetch(`${BASE_URL}/repos/${owner}/${repo}/pulls?state=open&per_page=30`, { headers: this.getHeaders() }),
-        fetch(`${BASE_URL}/repos/${owner}/${repo}/pulls?state=closed&per_page=30`, { headers: this.getHeaders() })
+        fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/pulls?state=open&per_page=30`, { headers: this.getHeaders() }),
+        fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/pulls?state=closed&per_page=30`, { headers: this.getHeaders() })
       ]);
 
       const openList: PullRequestSummary[] = openRes.ok ? await openRes.json() : [];
@@ -199,7 +203,7 @@ export class GitHubApiService {
 
   static async getRepoIssues(owner: string, repo: string): Promise<{ openCount: number; closedCount: number; list: IssueSummary[] }> {
     try {
-      const res = await fetch(`${BASE_URL}/repos/${owner}/${repo}/issues?state=all&per_page=30`, {
+      const res = await fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/issues?state=all&per_page=30`, {
         headers: this.getHeaders()
       });
       this.parseRateLimit(res);
@@ -225,7 +229,7 @@ export class GitHubApiService {
 
   static async getIssueComments(owner: string, repo: string, issueNumber: number): Promise<ThreadComment[]> {
     try {
-      const res = await fetch(`${BASE_URL}/repos/${owner}/${repo}/issues/${issueNumber}/comments?per_page=20`, {
+      const res = await fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/issues/${issueNumber}/comments?per_page=20`, {
         headers: this.getHeaders()
       });
       if (!res.ok) return [];
@@ -247,7 +251,7 @@ export class GitHubApiService {
 
   static async getPRComments(owner: string, repo: string, prNumber: number): Promise<ThreadComment[]> {
     try {
-      const res = await fetch(`${BASE_URL}/repos/${owner}/${repo}/issues/${prNumber}/comments?per_page=20`, {
+      const res = await fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/issues/${prNumber}/comments?per_page=20`, {
         headers: this.getHeaders()
       });
       if (!res.ok) return [];
@@ -270,8 +274,8 @@ export class GitHubApiService {
   static async getRepoTraffic(owner: string, repo: string): Promise<{ views: TrafficViewsData | null; clones: TrafficClonesData | null }> {
     try {
       const [viewsRes, clonesRes] = await Promise.all([
-        fetch(`${BASE_URL}/repos/${owner}/${repo}/traffic/views`, { headers: this.getHeaders() }),
-        fetch(`${BASE_URL}/repos/${owner}/${repo}/traffic/clones`, { headers: this.getHeaders() })
+        fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/traffic/views`, { headers: this.getHeaders() }),
+        fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/traffic/clones`, { headers: this.getHeaders() })
       ]);
 
       const views = viewsRes.ok ? await viewsRes.json() : null;
@@ -284,7 +288,7 @@ export class GitHubApiService {
 
   static async getRepoLanguages(owner: string, repo: string): Promise<LanguageBytes> {
     try {
-      const res = await fetch(`${BASE_URL}/repos/${owner}/${repo}/languages`, {
+      const res = await fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/languages`, {
         headers: this.getHeaders()
       });
       if (!res.ok) return {};
@@ -296,7 +300,7 @@ export class GitHubApiService {
 
   static async getRepoContributors(owner: string, repo: string): Promise<Contributor[]> {
     try {
-      const res = await fetch(`${BASE_URL}/repos/${owner}/${repo}/contributors?per_page=10`, {
+      const res = await fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/contributors?per_page=10`, {
         headers: this.getHeaders()
       });
       if (!res.ok) return [];

@@ -1,20 +1,22 @@
-import React from 'react';
 import {
   RefreshCw,
   SlidersHorizontal,
   Layers,
   Sparkles,
   Info,
+  Building2,
 } from 'lucide-react';
 import { GithubIcon } from '../common/GithubIcon';
 import { GitHubUser, RateLimitStatus } from '../../types/github';
 import { ActiveTab } from '../../types/config';
 import { APP_VERSION } from '../../constants/version';
+import { isStandardGitHub, getInstanceDomain } from '../../utils/githubEndpoints';
 
 interface HeaderProps {
   user: GitHubUser | null;
   rateLimit: RateLimitStatus | null;
   isDemoMode: boolean;
+  instanceUrl?: string;
   activeTab: ActiveTab;
   trackedCount: number;
   isLoading: boolean;
@@ -28,6 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
   user,
   rateLimit,
   isDemoMode,
+  instanceUrl,
   activeTab,
   trackedCount,
   isLoading,
@@ -49,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
             <GithubIcon size={20} />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-base sm:text-lg font-extrabold text-gh-text tracking-tight flex items-center gap-1.5 truncate">
                 GitPulse
               </h1>
@@ -59,6 +62,10 @@ export const Header: React.FC<HeaderProps> = ({
               {isDemoMode ? (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gh-yellow/15 text-gh-yellow border border-gh-yellow/30 flex items-center gap-1">
                   <Sparkles size={10} /> Demo
+                </span>
+              ) : instanceUrl && !isStandardGitHub(instanceUrl) ? (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gh-purple/15 text-gh-purple border border-gh-purple/30 flex items-center gap-1" title={instanceUrl}>
+                  <Building2 size={10} /> {getInstanceDomain(instanceUrl)}
                 </span>
               ) : (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gh-green/15 text-gh-green border border-gh-green/30">

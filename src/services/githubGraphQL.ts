@@ -1,7 +1,6 @@
 import { DiscussionSummary, ThreadComment } from '../types/github';
 import { StorageService } from './storageService';
-
-const GRAPHQL_ENDPOINT = 'https://api.github.com/graphql';
+import { getGraphQLEndpoint } from '../utils/githubEndpoints';
 
 export class GitHubGraphQLService {
   static async fetchDiscussions(owner: string, repo: string): Promise<{
@@ -13,6 +12,8 @@ export class GitHubGraphQLService {
     if (!token) {
       return { discussionsCount: 0, discussionCommentsCount: 0, discussions: [] };
     }
+
+    const endpoint = getGraphQLEndpoint(StorageService.getInstanceUrl());
 
     const query = `
       query GetRepoDiscussions($owner: String!, $name: String!) {
@@ -53,7 +54,7 @@ export class GitHubGraphQLService {
     `;
 
     try {
-      const res = await fetch(GRAPHQL_ENDPOINT, {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

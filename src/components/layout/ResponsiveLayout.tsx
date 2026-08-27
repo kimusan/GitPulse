@@ -12,6 +12,7 @@ interface ResponsiveLayoutProps {
   user: GitHubUser | null;
   rateLimit: RateLimitStatus | null;
   isDemoMode: boolean;
+  instanceUrl?: string;
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
   trackedStats: Record<number, RepoDetailedStats>;
@@ -29,6 +30,7 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
   user,
   rateLimit,
   isDemoMode,
+  instanceUrl,
   activeTab,
   onTabChange,
   trackedStats,
@@ -70,6 +72,7 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
           user={user}
           rateLimit={rateLimit}
           isDemoMode={isDemoMode}
+          instanceUrl={instanceUrl}
           activeTab={activeTab}
           trackedCount={trackedCount}
           isLoading={isLoading}

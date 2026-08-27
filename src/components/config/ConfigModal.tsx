@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   X,
   Sliders,
@@ -13,11 +13,13 @@ import {
   Clock,
   Info,
   Globe,
+  Server,
 } from 'lucide-react';
 import { UserAppConfig, VisibleMetricsConfig, AutoRefreshInterval, ThemeMode } from '../../types/config';
 import { RateLimitStatus, GitHubUser } from '../../types/github';
 import { APP_METADATA } from '../../constants/version';
 import { GithubIcon } from '../common/GithubIcon';
+import { normalizeInstanceUrl, isStandardGitHub } from '../../utils/githubEndpoints';
 import clsx from 'clsx';
 
 interface ConfigModalProps {
@@ -29,6 +31,7 @@ interface ConfigModalProps {
   onSetAutoRefresh: (val: AutoRefreshInterval) => void;
   onToggleCompact: () => void;
   onSetTheme: (theme: ThemeMode) => void;
+  onSetInstanceUrl?: (url: string) => void;
   onClearCache: () => void;
   onLogout: () => void;
   onClose: () => void;
@@ -43,10 +46,23 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   onSetAutoRefresh,
   onToggleCompact,
   onSetTheme,
+  onSetInstanceUrl,
   onClearCache,
   onLogout,
   onClose,
 }) => {
+  const [editingUrl, setEditingUrl] = React.useState(config.instanceUrl || 'https://github.com');
+  const [isSavedUrl, setIsSavedUrl] = React.useState(false);
+
+  const handleSaveUrl = () => {
+    const normalized = normalizeInstanceUrl(editingUrl);
+    if (onSetInstanceUrl) {
+      onSetInstanceUrl(normalized);
+    }
+    setEditingUrl(normalized);
+    setIsSavedUrl(true);
+    setTimeout(() => setIsSavedUrl(false), 2000);
+  };
   const metricOptions: Array<{ id: keyof VisibleMetricsConfig; label: string; desc: string }> = [
     { id: 'stars', label: 'Total Stars', desc: 'Aggregate stargazers across all tracked repositories' },
     { id: 'downloads', label: 'Release Downloads', desc: 'Total download counts across all release assets' },
@@ -197,18 +213,53 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
           </div>
 
           {/* Rate Limit & Connection Status */}
-          <div className="bg-gh-card/50 border border-gh-border rounded-2xl p-4 text-xs space-y-2">
+          <div className="bg-gh-card/50 border border-gh-border rounded-2xl p-4 text-xs space-y-3">
             <h3 className="font-semibold text-gh-text uppercase tracking-wider text-[11px] flex items-center gap-1.5">
               <Shield size={13} className="text-gh-blue" />
-              API Quota & Account Status
+              API Quota & Server Target
             </h3>
-            <div className="flex items-center justify-between text-gh-muted">
+            
+            {/* Instance URL Configuration */}
+            <div className="space-y-1.5 pt-0.5">
+              <label className="text-[11px] font-semibold text-gh-muted flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <Server size={12} className="text-gh-cyan" />
+                  GitHub Server / Instance URL
+                </span>
+                {isStandardGitHub(config.instanceUrl) ? (
+                  <span className="text-[10px] text-gh-green font-medium">Standard GitHub.com</span>
+                ) : (
+                  <span className="text-[10px] text-gh-yellow font-bold uppercase">Enterprise Server</span>
+                )}
+              </label>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    value={editingUrl}
+                    onChange={e => setEditingUrl(e.target.value)}
+                    placeholder="https://github.com or https://ghe.company.com"
+                    className="w-full pl-7 pr-3 py-1.5 bg-gh-surface border border-gh-border rounded-xl text-gh-text placeholder-gh-muted focus:outline-none focus:border-gh-blue text-xs font-mono"
+                  />
+                  <Globe size={12} className="absolute left-2.5 top-2.5 text-gh-muted" />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSaveUrl}
+                  className="px-3 py-1.5 bg-gh-blue hover:bg-gh-blue/90 text-white rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 flex-shrink-0"
+                >
+                  {isSavedUrl ? <Check size={13} /> : 'Save'}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-gh-muted pt-1 border-t border-gh-border/50">
               <span>Account Mode:</span>
               <strong className="text-gh-text">{isDemoMode ? 'Demo Mode (Mock API)' : user?.login || 'Connected'}</strong>
             </div>
             {rateLimit && (
               <div className="flex items-center justify-between text-gh-muted">
-                <span>GitHub API Rate Limit:</span>
+                <span>API Rate Limit:</span>
                 <strong className="text-gh-green">
                   {rateLimit.remaining.toLocaleString()} / {rateLimit.limit.toLocaleString()} remaining
                 </strong>

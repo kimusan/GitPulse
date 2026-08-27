@@ -8,6 +8,7 @@ export interface GitHubAuthState {
   isAuthenticated: boolean;
   isDemoMode: boolean;
   user: GitHubUser | null;
+  instanceUrl: string;
   isLoading: boolean;
   error: string | null;
   rateLimit: RateLimitStatus | null;
@@ -19,11 +20,13 @@ export function useGitHubAuth() {
     const token = StorageService.getAuthToken();
     const cachedUser = StorageService.getUserProfile();
     const rateLimit = StorageService.getRateLimit();
+    const instanceUrl = StorageService.getInstanceUrl();
 
     return {
       isAuthenticated: Boolean(token) || isDemo,
       isDemoMode: isDemo,
       user: isDemo ? MOCK_USER : cachedUser,
+      instanceUrl,
       isLoading: false,
       error: null,
       rateLimit
@@ -32,12 +35,15 @@ export function useGitHubAuth() {
 
   const checkAuth = useCallback(async () => {
     const isDemo = StorageService.isDemoMode();
+    const instanceUrl = StorageService.getInstanceUrl();
+
     if (isDemo) {
       setState(prev => ({
         ...prev,
         isAuthenticated: true,
         isDemoMode: true,
         user: MOCK_USER,
+        instanceUrl,
         isLoading: false,
         error: null,
         rateLimit: { limit: 5000, remaining: 4980, reset: Math.floor(Date.now() / 1000) + 3600, used: 20 }
@@ -52,6 +58,7 @@ export function useGitHubAuth() {
         isAuthenticated: false,
         isDemoMode: false,
         user: null,
+        instanceUrl,
         isLoading: false,
       }));
       return;
@@ -66,6 +73,7 @@ export function useGitHubAuth() {
         isAuthenticated: true,
         isDemoMode: false,
         user,
+        instanceUrl,
         isLoading: false,
         error: null,
         rateLimit
@@ -83,11 +91,13 @@ export function useGitHubAuth() {
     checkAuth();
   }, [checkAuth]);
 
-  const loginWithToken = async (token: string): Promise<{ success: boolean; error?: string }> => {
+  const loginWithToken = async (token: string, instanceUrl?: string): Promise<{ success: boolean; error?: string }> => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    const result = await GitHubApiService.verifyToken(token);
+    const targetUrl = instanceUrl || state.instanceUrl || 'https://github.com';
+    const result = await GitHubApiService.verifyToken(token, targetUrl);
 
     if (result.valid && result.user) {
+      StorageService.setInstanceUrl(targetUrl);
       StorageService.setAuthToken(token);
       StorageService.setDemoMode(false);
       StorageService.setUserProfile(result.user);
@@ -97,6 +107,7 @@ export function useGitHubAuth() {
         isAuthenticated: true,
         isDemoMode: false,
         user: result.user,
+        instanceUrl: StorageService.getInstanceUrl(),
         isLoading: false,
         error: null,
         rateLimit
@@ -112,6 +123,11 @@ export function useGitHubAuth() {
     }
   };
 
+  const updateInstanceUrl = (newUrl: string) => {
+    StorageService.setInstanceUrl(newUrl);
+    setState(prev => ({ ...prev, instanceUrl: StorageService.getInstanceUrl() }));
+  };
+
   const enableDemoMode = () => {
     StorageService.removeAuthToken();
     StorageService.setDemoMode(true);
@@ -125,6 +141,7 @@ export function useGitHubAuth() {
       isAuthenticated: true,
       isDemoMode: true,
       user: MOCK_USER,
+      instanceUrl: 'https://github.com',
       isLoading: false,
       error: null,
       rateLimit: { limit: 5000, remaining: 4980, reset: Math.floor(Date.now() / 1000) + 3600, used: 20 }
@@ -137,6 +154,7 @@ export function useGitHubAuth() {
       isAuthenticated: false,
       isDemoMode: false,
       user: null,
+      instanceUrl: 'https://github.com',
       isLoading: false,
       error: null,
       rateLimit: null
@@ -146,6 +164,7 @@ export function useGitHubAuth() {
   return {
     ...state,
     loginWithToken,
+    updateInstanceUrl,
     enableDemoMode,
     logout,
     refreshUser: checkAuth

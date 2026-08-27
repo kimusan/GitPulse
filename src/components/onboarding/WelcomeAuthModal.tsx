@@ -9,11 +9,15 @@ import {
   TrendingUp,
   BarChart3,
   Layers,
+  Server,
+  Globe,
+  Building2,
 } from 'lucide-react';
 import { GithubIcon } from '../common/GithubIcon';
+import { normalizeInstanceUrl, isStandardGitHub } from '../../utils/githubEndpoints';
 
 interface WelcomeAuthModalProps {
-  onLogin: (token: string) => Promise<{ success: boolean; error?: string }>;
+  onLogin: (token: string, instanceUrl?: string) => Promise<{ success: boolean; error?: string }>;
   onDemoMode: () => void;
   isLoading: boolean;
   error?: string | null;
@@ -26,6 +30,8 @@ export const WelcomeAuthModal: React.FC<WelcomeAuthModalProps> = ({
   error: initialError,
 }) => {
   const [token, setToken] = useState('');
+  const [instanceUrl, setInstanceUrl] = useState('https://github.com');
+  const [isEnterprise, setIsEnterprise] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,14 +41,15 @@ export const WelcomeAuthModal: React.FC<WelcomeAuthModalProps> = ({
       return;
     }
     setLocalError(null);
-    const res = await onLogin(token.trim());
+    const targetUrl = isEnterprise ? normalizeInstanceUrl(instanceUrl) : 'https://github.com';
+    const res = await onLogin(token.trim(), targetUrl);
     if (!res.success) {
-      setLocalError(res.error || 'Failed to authenticate with GitHub');
+      setLocalError(res.error || 'Failed to authenticate with GitHub instance');
     }
   };
 
-  const tokenUrl =
-    'https://github.com/settings/tokens/new?scopes=repo,read:user,read:org&description=GitPulse%20Stats%20App';
+  const activeHost = isEnterprise ? normalizeInstanceUrl(instanceUrl) : 'https://github.com';
+  const tokenUrl = `${activeHost}/settings/tokens/new?scopes=repo,read:user,read:org&description=GitPulse%20Stats%20App`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
@@ -78,6 +85,46 @@ export const WelcomeAuthModal: React.FC<WelcomeAuthModalProps> = ({
             <Layers size={16} className="text-gh-purple" />
             <span className="text-gh-text font-medium text-[11px]">Multi-Repo Select</span>
           </div>
+        </div>
+
+        {/* Server Target Selector */}
+        <div className="mb-4 bg-gh-card/40 border border-gh-border/70 rounded-2xl p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-gh-text flex items-center gap-1.5">
+              <Server size={13} className="text-gh-cyan" />
+              GitHub Instance
+            </label>
+            <button
+              type="button"
+              onClick={() => setIsEnterprise(!isEnterprise)}
+              className="text-[11px] text-gh-blue hover:underline font-semibold flex items-center gap-1"
+            >
+              {isEnterprise ? 'Use GitHub.com' : 'GitHub Enterprise?'}
+            </button>
+          </div>
+
+          {isEnterprise ? (
+            <div className="space-y-1.5 pt-1 animate-fade-in">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={instanceUrl}
+                  onChange={e => setInstanceUrl(e.target.value)}
+                  placeholder="https://github.company.com"
+                  className="w-full pl-8 pr-3 py-2 bg-gh-surface border border-gh-border rounded-xl text-gh-text placeholder-gh-muted focus:outline-none focus:border-gh-blue text-xs font-mono"
+                />
+                <Globe size={13} className="absolute left-2.5 top-2.5 text-gh-muted" />
+              </div>
+              <p className="text-[10px] text-gh-muted leading-tight">
+                Enter your company’s GitHub Enterprise Server (GHES) or custom domain.
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-xs text-gh-muted bg-gh-surface/70 px-3 py-2 rounded-xl border border-gh-border/50">
+              <Globe size={13} className="text-gh-green" />
+              <span className="font-mono text-gh-text text-[11px]">https://github.com (Default)</span>
+            </div>
+          )}
         </div>
 
         {/* Token Form */}

@@ -237,12 +237,14 @@ Outputs `.msi` installers and `.exe` binaries in `src-tauri/target/release/bundl
 
 ## Configuration & Environment
 
-### GitHub Authentication
-* **Personal Access Token (PAT)**: Create a classic or fine-grained token on [GitHub Tokens Settings](https://github.com/settings/tokens) with `repo` (or `public_repo`) and `read:discussion` scopes.
+### GitHub Authentication & Instances
+* **Standard GitHub (github.com)**: Connect using a classic or fine-grained token with `repo` (or `public_repo`) and `read:discussion` scopes.
+* **GitHub Enterprise Server (GHES)**: Point GitPulse directly to your self-hosted company server (e.g. `https://github.mycompany.com`). REST endpoints (`/api/v3`) and GraphQL endpoints (`/api/graphql`) are automatically derived.
 * **Demo Mode**: 1-click instant sandbox with 5 pre-loaded realistic repositories (`hyper-terminal`, `pulse-ui`, `droid-flow`, `cloud-stat-cli`, `ai-prompt-craft`).
 
 ### Customizable Settings
 * **Metrics Visibility**: Selectively toggle any KPI card on/off from the settings modal.
+* **Server Instance Switching**: Switch between GitHub.com and Enterprise instances at any time without reinstalling.
 * **Auto-Refresh**: Set automatic background refresh frequency (`Off`, `15m`, `1h`, `6h`, `24h`).
 * **Cache Management**: One-click cache flushing and instant re-fetching.
 

@@ -43,10 +43,12 @@ export function App() {
     isAuthenticated,
     isDemoMode,
     user,
+    instanceUrl,
     isLoading: isAuthLoading,
     error: authError,
     rateLimit,
     loginWithToken,
+    updateInstanceUrl,
     enableDemoMode,
     logout,
   } = useGitHubAuth();
@@ -55,6 +57,7 @@ export function App() {
   const {
     config,
     setTheme,
+    setInstanceUrl,
     setTrackedRepoIds,
     toggleTrackedRepo,
     toggleMetricVisibility,
@@ -94,6 +97,7 @@ export function App() {
       user={user}
       rateLimit={rateLimit}
       isDemoMode={isDemoMode}
+      instanceUrl={instanceUrl}
       activeTab={activeTab}
       onTabChange={tab => {
         if (tab === 'config') {
@@ -331,6 +335,11 @@ export function App() {
           onToggleMetric={toggleMetricVisibility}
           onSetAutoRefresh={setAutoRefresh}
           onSetTheme={setTheme}
+          onSetInstanceUrl={url => {
+            setInstanceUrl(url);
+            updateInstanceUrl(url);
+            refreshStats();
+          }}
           onToggleCompact={toggleCompactCardView}
           onClearCache={refreshStats}
           onLogout={() => {

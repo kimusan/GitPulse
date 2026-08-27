@@ -1,9 +1,11 @@
 import { UserAppConfig } from '../types/config';
 import { GitHubUser, RateLimitStatus } from '../types/github';
 import { RepoDetailedStats } from '../types/stats';
+import { normalizeInstanceUrl } from '../utils/githubEndpoints';
 
 const KEYS = {
   AUTH_TOKEN: 'gitpulse_auth_token',
+  AUTH_INSTANCE_URL: 'gitpulse_auth_instance_url',
   USER_PROFILE: 'gitpulse_user_profile',
   APP_CONFIG: 'gitpulse_app_config',
   CACHED_STATS_PREFIX: 'gitpulse_stats_',
@@ -14,6 +16,7 @@ const KEYS = {
 
 export const DEFAULT_CONFIG: UserAppConfig = {
   theme: 'github-dark',
+  instanceUrl: 'https://github.com',
   trackedRepoIds: [],
   visibleMetrics: {
     stars: true,
@@ -47,6 +50,19 @@ export class StorageService {
 
   static removeAuthToken(): void {
     localStorage.removeItem(KEYS.AUTH_TOKEN);
+  }
+
+  static getInstanceUrl(): string {
+    const stored = localStorage.getItem(KEYS.AUTH_INSTANCE_URL);
+    return normalizeInstanceUrl(stored || 'https://github.com');
+  }
+
+  static setInstanceUrl(url: string): void {
+    localStorage.setItem(KEYS.AUTH_INSTANCE_URL, normalizeInstanceUrl(url));
+  }
+
+  static removeInstanceUrl(): void {
+    localStorage.removeItem(KEYS.AUTH_INSTANCE_URL);
   }
 
   static isDemoMode(): boolean {
