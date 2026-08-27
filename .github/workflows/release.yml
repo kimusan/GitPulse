@@ -171,12 +171,14 @@ jobs:
         shell: bash
         run: |
           mkdir -p artifacts/windows
-          # Copy MSI Installer
-          find src-tauri/target/release/bundle/msi -name "*.msi" -exec cp {} artifacts/windows/GitPulse-Windows-x64.msi \;
-          # Copy Standalone Executable
-          if [ -f "src-tauri/target/release/git-pulse.exe" ]; then
-            cp src-tauri/target/release/git-pulse.exe artifacts/windows/GitPulse-Windows-x64.exe
-          fi
+          # 1. Standalone Portable Executable (No installation required)
+          find src-tauri/target/release -maxdepth 1 -name "*.exe" -exec cp {} artifacts/windows/GitPulse-Windows-Portable-x64.exe \; 2>/dev/null || true
+
+          # 2. MSI Enterprise Installer
+          find src-tauri/target/release/bundle/msi -name "*.msi" -exec cp {} artifacts/windows/GitPulse-Windows-x64-Setup.msi \; 2>/dev/null || true
+
+          # 3. NSIS Executable Installer (if built)
+          find src-tauri/target/release/bundle/nsis -name "*.exe" -exec cp {} artifacts/windows/GitPulse-Windows-x64-Setup.exe \; 2>/dev/null || true
 
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
