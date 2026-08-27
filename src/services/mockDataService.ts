@@ -283,9 +283,55 @@ export const MOCK_DETAILED_STATS: Record<number, RepoDetailedStats> = {
             content_type: 'application/x-msdos-program'
           }
         ]
+      },
+      {
+        id: 3,
+        tag_name: 'v2.2.0',
+        name: 'v2.2.0: Dynamic Theme Support & GPU glyph cache',
+        body: 'Introduces 20+ built-in themes and high performance GPU texture atlases.',
+        draft: false,
+        prerelease: false,
+        created_at: '2026-06-01T08:00:00Z',
+        published_at: '2026-06-01T09:00:00Z',
+        html_url: '#',
+        assets: [
+          {
+            id: 1007,
+            name: 'hyper-terminal-linux-x86_64.AppImage',
+            size: 46200000,
+            download_count: 15200,
+            created_at: '2026-06-01T08:30:00Z',
+            updated_at: '2026-06-01T08:30:00Z',
+            browser_download_url: '#',
+            content_type: 'application/x-executable'
+          }
+        ]
+      },
+      {
+        id: 4,
+        tag_name: 'v2.1.0',
+        name: 'v2.1.0: Cross-platform OpenGL fallback',
+        body: 'Ensures support on legacy graphics chipsets without Vulkan.',
+        draft: false,
+        prerelease: false,
+        created_at: '2026-04-12T12:00:00Z',
+        published_at: '2026-04-12T13:00:00Z',
+        html_url: '#',
+        assets: [
+          {
+            id: 1008,
+            name: 'hyper-terminal-all-platforms.tar.gz',
+            size: 38000000,
+            download_count: 9800,
+            created_at: '2026-04-12T12:30:00Z',
+            updated_at: '2026-04-12T12:30:00Z',
+            browser_download_url: '#',
+            content_type: 'application/gzip'
+          }
+        ]
       }
     ],
-    totalDownloads: 118390,
+    totalDownloads: 143390,
     openPullRequestsCount: 7,
     closedPullRequestsCount: 24,
     mergedPullRequestsCount: 142,
@@ -530,9 +576,55 @@ export const MOCK_DETAILED_STATS: Record<number, RepoDetailedStats> = {
             content_type: 'application/gzip'
           }
         ]
+      },
+      {
+        id: 12,
+        tag_name: 'v1.7.0',
+        name: 'v1.7.0: Glassmorphism and Backdrop Blur Engine',
+        body: 'Hardware-accelerated blurred backgrounds and neon gradients.',
+        draft: false,
+        prerelease: false,
+        created_at: '2026-06-20T10:00:00Z',
+        published_at: '2026-06-20T11:00:00Z',
+        html_url: '#',
+        assets: [
+          {
+            id: 2002,
+            name: 'pulse-ui-tokens-v1.7.0.tgz',
+            size: 3900000,
+            download_count: 35380,
+            created_at: '2026-06-20T10:30:00Z',
+            updated_at: '2026-06-20T10:30:00Z',
+            browser_download_url: '#',
+            content_type: 'application/gzip'
+          }
+        ]
+      },
+      {
+        id: 13,
+        tag_name: 'v1.6.0',
+        name: 'v1.6.0: Responsive Breakpoint Primitives',
+        body: 'Fluid typographic scaling and container query helpers.',
+        draft: false,
+        prerelease: false,
+        created_at: '2026-05-10T09:00:00Z',
+        published_at: '2026-05-10T10:00:00Z',
+        html_url: '#',
+        assets: [
+          {
+            id: 2003,
+            name: 'pulse-ui-tokens-v1.6.0.tgz',
+            size: 3600000,
+            download_count: 24100,
+            created_at: '2026-05-10T09:30:00Z',
+            updated_at: '2026-05-10T09:30:00Z',
+            browser_download_url: '#',
+            content_type: 'application/gzip'
+          }
+        ]
       }
     ],
-    totalDownloads: 84300,
+    totalDownloads: 108400,
     openPullRequestsCount: 4,
     closedPullRequestsCount: 18,
     mergedPullRequestsCount: 88,
