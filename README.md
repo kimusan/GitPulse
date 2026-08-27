@@ -39,8 +39,21 @@ GitPulse is built specifically for **multi-device ergonomics**:
 ### Main Analytics Dashboard (GitHub Dark)
 ![GitPulse Dashboard](assets/dashboard_preview.png)
 
-### Retro CRT Terminal Mode (Phosphor Green with Scanlines)
-![GitPulse Retro CRT](assets/retro_crt_preview.png)
+### Repository Deep-Dive & Release Downloads Telemetry
+![GitPulse Repository Modal](assets/repo_detail_preview.png)
+
+<table>
+  <tr>
+    <td width="40%" align="center">
+      <strong>Mobile Phone Viewport</strong><br/><br/>
+      <img src="assets/mobile_preview.png" alt="GitPulse Mobile" width="100%" />
+    </td>
+    <td width="60%" align="center">
+      <strong>Retro CRT Terminal Mode</strong><br/><br/>
+      <img src="assets/retro_crt_preview.png" alt="GitPulse Retro CRT" width="100%" />
+    </td>
+  </tr>
+</table>
 
 </div>
 
