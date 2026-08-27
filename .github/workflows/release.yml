@@ -1,0 +1,220 @@
+name: Release GitPulse
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v1.0.0)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  # ==========================================
+  # 1. Android Build (APK & AAB)
+  # ==========================================
+  build-android:
+    name: Build Android Binaries
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web application
+        run: npm run build
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Build Android APK and AAB
+        working-directory: ./android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug assembleRelease bundleRelease --no-daemon
+
+      - name: Prepare Android artifacts
+        run: |
+          mkdir -p artifacts/android
+          # Copy Debug APK (Ready to install immediately)
+          if [ -f "android/app/build/outputs/apk/debug/app-debug.apk" ]; then
+            cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/android/GitPulse-Android-debug.apk
+          fi
+          # Copy Release APK (Unsigned)
+          if [ -f "android/app/build/outputs/apk/release/app-release-unsigned.apk" ]; then
+            cp android/app/build/outputs/apk/release/app-release-unsigned.apk artifacts/android/GitPulse-Android-release-unsigned.apk
+          fi
+          # Copy Release AAB (Google Play Bundle)
+          if [ -f "android/app/build/outputs/bundle/release/app-release.aab" ]; then
+            cp android/app/build/outputs/bundle/release/app-release.aab artifacts/android/GitPulse-Android-release.aab
+          fi
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-binaries
+          path: artifacts/android/*
+          retention-days: 7
+
+  # ==========================================
+  # 2. Linux Desktop Build (AppImage & DEB)
+  # ==========================================
+  build-linux:
+    name: Build Linux Desktop (AppImage & DEB)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web application
+        run: npm run build
+
+      - name: Build Tauri Linux application
+        run: npx tauri build
+
+      - name: Prepare Linux artifacts
+        run: |
+          mkdir -p artifacts/linux
+          # Copy AppImage
+          find src-tauri/target/release/bundle/appimage -name "*.AppImage" -exec cp {} artifacts/linux/GitPulse-Linux-x86_64.AppImage \;
+          # Copy DEB Package
+          find src-tauri/target/release/bundle/deb -name "*.deb" -exec cp {} artifacts/linux/GitPulse-Linux-amd64.deb \;
+          # Copy Standalone Executable
+          if [ -f "src-tauri/target/release/git-pulse" ]; then
+            cp src-tauri/target/release/git-pulse artifacts/linux/git-pulse-linux-x86_64
+          fi
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-binaries
+          path: artifacts/linux/*
+          retention-days: 7
+
+  # ==========================================
+  # 3. Windows Desktop Build (MSI & EXE)
+  # ==========================================
+  build-windows:
+    name: Build Windows Desktop (MSI & EXE)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web application
+        run: npm run build
+
+      - name: Build Tauri Windows application
+        run: npx tauri build
+
+      - name: Prepare Windows artifacts
+        shell: bash
+        run: |
+          mkdir -p artifacts/windows
+          # Copy MSI Installer
+          find src-tauri/target/release/bundle/msi -name "*.msi" -exec cp {} artifacts/windows/GitPulse-Windows-x64.msi \;
+          # Copy Standalone Executable
+          if [ -f "src-tauri/target/release/git-pulse.exe" ]; then
+            cp src-tauri/target/release/git-pulse.exe artifacts/windows/GitPulse-Windows-x64.exe
+          fi
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binaries
+          path: artifacts/windows/*
+          retention-days: 7
+
+  # ==========================================
+  # 4. Create GitHub Release & Attach Binaries
+  # ==========================================
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build-android, build-linux, build-windows]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Inspect downloaded binaries
+        run: |
+          echo "=== Release Binaries Ready for Publishing ==="
+          ls -lh release-assets/
+
+      - name: Create GitHub Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
