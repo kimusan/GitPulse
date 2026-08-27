@@ -21,6 +21,7 @@ interface SidebarProps {
   selectedRepoId: number | null;
   onSelectRepo: (id: number) => void;
   onOpenRepoSelector: () => void;
+  onOpenAbout?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -30,6 +31,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   selectedRepoId,
   onSelectRepo,
   onOpenRepoSelector,
+  onOpenAbout,
 }) => {
   const navItems: Array<{ id: ActiveTab; label: string; icon: React.ReactNode }> = [
     { id: 'dashboard', label: 'Dashboard Overview', icon: <LayoutDashboard size={18} /> },
@@ -126,13 +128,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Footer Branding */}
-      <div className="p-4 border-t border-gh-border/60 text-xs text-gh-muted flex items-center justify-between">
+      {/* Footer Branding & About link */}
+      <div
+        onClick={onOpenAbout}
+        className="p-4 border-t border-gh-border/60 text-xs text-gh-muted flex items-center justify-between cursor-pointer hover:bg-gh-card/50 transition-colors"
+        title="About GitPulse"
+      >
         <div className="flex items-center gap-1.5">
           <GithubIcon size={14} />
-          <span className="font-semibold text-gh-text text-[11px]">GitPulse v1.0</span>
+          <span className="font-semibold text-gh-text text-[11px]">GitPulse v1.0.0</span>
         </div>
-        <span className="text-[10px] text-gh-blue font-medium">Android & Desktop</span>
+        <span className="text-[10px] text-gh-blue font-medium hover:underline">About</span>
       </div>
     </aside>
   );

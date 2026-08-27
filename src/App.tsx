@@ -8,6 +8,8 @@ import {
   Sliders,
   ExternalLink,
   AlertTriangle,
+  RefreshCw,
+  Info,
 } from 'lucide-react';
 import { GithubIcon } from './components/common/GithubIcon';
 import { useGitHubAuth } from './hooks/useGitHubAuth';
@@ -25,6 +27,7 @@ import { DownloadsBreakdownChart } from './components/charts/DownloadsBreakdownC
 import { IssuesPrRatioChart } from './components/charts/IssuesPrRatioChart';
 import { RepoDetailModal } from './components/repository/RepoDetailModal';
 import { ConfigModal } from './components/config/ConfigModal';
+import { AboutModal } from './components/common/AboutModal';
 import { EmptyState } from './components/common/EmptyState';
 import { ActiveTab } from './types/config';
 
@@ -32,6 +35,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [isRepoSelectorOpen, setIsRepoSelectorOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [selectedDetailRepoId, setSelectedDetailRepoId] = useState<number | null>(null);
 
   // Auth Hook
@@ -67,6 +71,9 @@ export function App() {
     starDistribution,
     commitTrendData,
     isLoadingStats,
+    isLoadingRepos,
+    currentLoadingRepoName,
+    loadingProgress,
     error: statsError,
     refreshStats,
   } = useRepoStats(
@@ -76,20 +83,11 @@ export function App() {
     config.autoRefresh
   );
 
-  // If user is not authenticated, show Welcome & Login Onboarding Modal
-  if (!isAuthenticated) {
-    return (
-      <WelcomeAuthModal
-        onLogin={loginWithToken}
-        onDemoMode={enableDemoMode}
-        isLoading={isAuthLoading}
-        error={authError}
-      />
-    );
-  }
-
   const detailedRepoList = Object.values(trackedStats);
   const activeDetailStats = selectedDetailRepoId ? trackedStats[selectedDetailRepoId] : null;
+
+  const hasConfiguredRepos = config.trackedRepoIds.length > 0;
+  const isInitialLoadingTracked = hasConfiguredRepos && (isLoadingStats || (detailedRepoList.length === 0 && isLoadingRepos));
 
   return (
     <ResponsiveLayout
@@ -109,6 +107,7 @@ export function App() {
       onSelectRepo={id => setSelectedDetailRepoId(id)}
       onOpenRepoSelector={() => setIsRepoSelectorOpen(true)}
       onOpenConfig={() => setIsConfigOpen(true)}
+      onOpenAbout={() => setIsAboutOpen(true)}
       onRefresh={refreshStats}
       isLoading={isLoadingStats}
     >
@@ -120,8 +119,56 @@ export function App() {
         </div>
       )}
 
-      {/* Main Tab Views */}
-      {detailedRepoList.length === 0 ? (
+      {/* Main Content Area */}
+      {isInitialLoadingTracked ? (
+        /* Real-time Tracked Repos Loading Card */
+        <div className="py-16 sm:py-24 flex flex-col items-center justify-center text-center px-4 animate-fade-in">
+          <div className="relative mb-6">
+            <div className="w-16 h-16 rounded-3xl bg-gh-blue/15 border border-gh-blue/30 flex items-center justify-center text-gh-blue shadow-glow-blue animate-pulse">
+              <RefreshCw size={28} className="animate-spin text-gh-blue" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gh-green border-2 border-gh-bg flex items-center justify-center text-white shadow-sm">
+              <Sparkles size={12} />
+            </div>
+          </div>
+
+          <h3 className="text-lg sm:text-xl font-bold text-gh-text mb-1.5">
+            Loading Tracked Repositories...
+          </h3>
+          <p className="text-xs text-gh-muted max-w-md mb-6 leading-relaxed">
+            {currentLoadingRepoName ? (
+              <span>
+                Fetching telemetry for <strong className="text-gh-blue font-mono font-bold">{currentLoadingRepoName}</strong>...
+              </span>
+            ) : (
+              'Preparing live statistics, binary download trajectories, and discussion threads...'
+            )}
+          </p>
+
+          {/* Real-time Progress Bar */}
+          {loadingProgress.total > 0 && (
+            <div className="w-full max-w-xs space-y-2 bg-gh-surface/80 p-3 rounded-2xl border border-gh-border/60">
+              <div className="w-full h-2 rounded-full bg-gh-card border border-gh-border overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-gh-blue to-gh-green rounded-full transition-all duration-300 shadow-sm"
+                  style={{
+                    width: `${Math.max(10, Math.round((loadingProgress.current / loadingProgress.total) * 100))}%`
+                  }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-gh-muted font-mono">
+                <span>
+                  Repo {loadingProgress.current} of {loadingProgress.total}
+                </span>
+                <span className="font-bold text-gh-text">
+                  {Math.round((loadingProgress.current / loadingProgress.total) * 100)}%
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : detailedRepoList.length === 0 ? (
+        /* Empty State when no repos are chosen */
         <EmptyState
           icon={FolderGit2}
           title="No Tracked Repositories Selected"
@@ -283,16 +330,33 @@ export function App() {
           isDemoMode={isDemoMode}
           onToggleMetric={toggleMetricVisibility}
           onSetAutoRefresh={setAutoRefresh}
-          onToggleCompact={toggleCompactCardView}
           onSetTheme={setTheme}
-          onClearCache={() => {
-            refreshStats();
-          }}
+          onToggleCompact={toggleCompactCardView}
+          onClearCache={refreshStats}
           onLogout={() => {
             setIsConfigOpen(false);
             logout();
           }}
           onClose={() => setIsConfigOpen(false)}
+        />
+      )}
+
+      {/* 4. About Modal */}
+      {isAboutOpen && (
+        <AboutModal onClose={() => setIsAboutOpen(false)} />
+      )}
+
+      {/* 5. Welcome & Authentication Onboarding Modal */}
+      {!isAuthenticated && (
+        <WelcomeAuthModal
+          isLoading={isAuthLoading}
+          error={authError}
+          onLogin={loginWithToken}
+          onDemoMode={() => {
+            enableDemoMode();
+            setTrackedRepoIds([101, 102, 103, 104, 105]);
+            setOnboardingCompleted(true);
+          }}
         />
       )}
     </ResponsiveLayout>

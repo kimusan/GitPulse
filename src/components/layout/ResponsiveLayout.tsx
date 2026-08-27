@@ -19,6 +19,7 @@ interface ResponsiveLayoutProps {
   onSelectRepo: (id: number) => void;
   onOpenRepoSelector: () => void;
   onOpenConfig: () => void;
+  onOpenAbout?: () => void;
   onRefresh: () => void;
   isLoading: boolean;
   children: React.ReactNode;
@@ -35,6 +36,7 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
   onSelectRepo,
   onOpenRepoSelector,
   onOpenConfig,
+  onOpenAbout,
   onRefresh,
   isLoading,
   children,
@@ -58,6 +60,7 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
           selectedRepoId={selectedRepoId}
           onSelectRepo={onSelectRepo}
           onOpenRepoSelector={onOpenRepoSelector}
+          onOpenAbout={onOpenAbout}
         />
       )}
 
@@ -73,6 +76,7 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
           onRefresh={onRefresh}
           onOpenRepoSelector={onOpenRepoSelector}
           onOpenConfig={onOpenConfig}
+          onOpenAbout={onOpenAbout}
         />
 
         <main className="flex-1 p-3 sm:p-6 max-w-7xl w-full mx-auto animate-fade-in">

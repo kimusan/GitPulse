@@ -15,6 +15,8 @@ export function useRepoStats(
   const [detailedStatsMap, setDetailedStatsMap] = useState<Record<number, RepoDetailedStats>>({});
   const [isLoadingRepos, setIsLoadingRepos] = useState(false);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [currentLoadingRepoName, setCurrentLoadingRepoName] = useState<string | null>(null);
+  const [loadingProgress, setLoadingProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null);
@@ -53,13 +55,18 @@ export function useRepoStats(
 
     try {
       if (isDemoMode) {
+        setLoadingProgress({ current: 0, total: trackedRepoIds.length });
         const stats: Record<number, RepoDetailedStats> = {};
-        trackedRepoIds.forEach(id => {
+        for (let i = 0; i < trackedRepoIds.length; i++) {
+          const id = trackedRepoIds[i];
           if (MOCK_DETAILED_STATS[id]) {
+            setCurrentLoadingRepoName(MOCK_DETAILED_STATS[id].repo.name);
+            setLoadingProgress({ current: i + 1, total: trackedRepoIds.length });
             stats[id] = MOCK_DETAILED_STATS[id];
           }
-        });
+        }
         setDetailedStatsMap(stats);
+        setCurrentLoadingRepoName(null);
         setLastUpdated(new Date());
       } else {
         const targetRepos = allRepos.filter(r => trackedRepoIds.includes(r.id));
@@ -68,32 +75,30 @@ export function useRepoStats(
           return;
         }
 
-        const statsEntries = await Promise.all(
-          targetRepos.map(async repo => {
-            try {
-              const detailed = await GitHubApiService.fetchCompleteRepoStats(repo, forceRefresh);
-              return [repo.id, detailed] as const;
-            } catch (e) {
-              console.error(`Error fetching stats for ${repo.name}:`, e);
-              return null;
-            }
-          })
-        );
-
+        setLoadingProgress({ current: 0, total: targetRepos.length });
         const newMap: Record<number, RepoDetailedStats> = {};
-        statsEntries.forEach(entry => {
-          if (entry) {
-            newMap[entry[0]] = entry[1];
+
+        for (let i = 0; i < targetRepos.length; i++) {
+          const repo = targetRepos[i];
+          setCurrentLoadingRepoName(repo.name);
+          setLoadingProgress({ current: i + 1, total: targetRepos.length });
+          try {
+            const detailed = await GitHubApiService.fetchCompleteRepoStats(repo, forceRefresh);
+            newMap[repo.id] = detailed;
+          } catch (e) {
+            console.error(`Error fetching stats for ${repo.name}:`, e);
           }
-        });
+        }
 
         setDetailedStatsMap(newMap);
+        setCurrentLoadingRepoName(null);
         setLastUpdated(new Date());
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to fetch repository statistics');
     } finally {
       setIsLoadingStats(false);
+      setCurrentLoadingRepoName(null);
     }
   }, [isAuthenticated, isDemoMode, trackedRepoIds, allRepos]);
 
@@ -282,6 +287,8 @@ export function useRepoStats(
     commitTrendData,
     isLoadingRepos,
     isLoadingStats,
+    currentLoadingRepoName,
+    loadingProgress,
     error,
     lastUpdated,
     selectedRepoId,

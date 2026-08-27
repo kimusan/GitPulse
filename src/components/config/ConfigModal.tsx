@@ -11,9 +11,13 @@ import {
   LayoutGrid,
   SunMoon,
   Clock,
+  Info,
+  Globe,
 } from 'lucide-react';
 import { UserAppConfig, VisibleMetricsConfig, AutoRefreshInterval, ThemeMode } from '../../types/config';
 import { RateLimitStatus, GitHubUser } from '../../types/github';
+import { APP_METADATA } from '../../constants/version';
+import { GithubIcon } from '../common/GithubIcon';
 import clsx from 'clsx';
 
 interface ConfigModalProps {
@@ -210,6 +214,41 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                 </strong>
               </div>
             )}
+          </div>
+
+          {/* About & Creator Info */}
+          <div className="bg-gh-card/50 border border-gh-border rounded-2xl p-4 text-xs space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-gh-text uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <Info size={13} className="text-gh-cyan" />
+                About GitPulse
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-gh-blue/20 text-gh-blue text-[10px] font-bold">
+                v{APP_METADATA.version}
+              </span>
+            </div>
+            <p className="text-gh-muted text-[11px] leading-relaxed">
+              Created by <strong className="text-gh-text">{APP_METADATA.author}</strong>. Designed for Android phones, foldables, tablets, and native desktop.
+            </p>
+            <div className="flex items-center gap-3 pt-1">
+              <a
+                href={APP_METADATA.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gh-cyan hover:underline flex items-center gap-1 font-semibold text-[11px]"
+              >
+                <Globe size={12} /> schulz.dk
+              </a>
+              <span className="text-gh-border">•</span>
+              <a
+                href={APP_METADATA.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gh-blue hover:underline flex items-center gap-1 font-semibold text-[11px]"
+              >
+                <GithubIcon size={12} /> GitHub Repository
+              </a>
+            </div>
           </div>
 
           {/* Danger / Action Zone */}
