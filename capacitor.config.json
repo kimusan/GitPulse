@@ -1,0 +1,13 @@
+{
+  "appId": "com.antigravity.gitpulse",
+  "appName": "GitPulse",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#0d1117",
+    "allowMixedContent": false,
+    "captureInput": true
+  }
+}

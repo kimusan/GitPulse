@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Safe Area Insets for Mobile/Foldable Android Devices */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Dynamic Theme CSS Variables (in RGB space-separated values for Tailwind opacity support) */
+:root, html.theme-github-dark {
+  color-scheme: dark;
+  --bg-main: 13 17 23;         /* #0d1117 */
+  --bg-surface: 22 27 34;      /* #161b22 */
+  --bg-card: 33 38 45;         /* #21262d */
+  --border-color: 48 54 61;    /* #30363d */
+  --text-main: 240 246 252;    /* #f0f6fc */
+  --text-muted: 139 148 158;   /* #8b949e */
+}
+
+html.theme-oled-black {
+  color-scheme: dark;
+  --bg-main: 0 0 0;            /* #000000 */
+  --bg-surface: 10 10 10;      /* #0a0a0a */
+  --bg-card: 20 20 20;         /* #141414 */
+  --border-color: 38 38 38;    /* #262626 */
+  --text-main: 255 255 255;    /* #ffffff */
+  --text-muted: 160 160 160;   /* #a0a0a0 */
+}
+
+html.theme-nord-blue {
+  color-scheme: dark;
+  --bg-main: 24 28 36;         /* #181c24 */
+  --bg-surface: 34 39 51;      /* #222733 */
+  --bg-card: 44 50 66;         /* #2c3242 */
+  --border-color: 62 70 89;    /* #3e4659 */
+  --text-main: 236 239 244;    /* #eceff4 */
+  --text-muted: 136 146 176;   /* #8892b0 */
+}
+
+html.theme-dracula {
+  color-scheme: dark;
+  --bg-main: 40 42 54;         /* #282a36 */
+  --bg-surface: 33 34 44;      /* #21222c */
+  --bg-card: 52 55 70;         /* #343746 */
+  --border-color: 98 114 164;  /* #6272a4 */
+  --text-main: 248 248 242;    /* #f8f8f2 */
+  --text-muted: 189 147 249;   /* #bd93f9 */
+}
+
+html.theme-retro-crt {
+  color-scheme: dark;
+  --bg-main: 5 13 8;           /* #050d08 Vintage Phosphor Black */
+  --bg-surface: 9 24 12;       /* #09180c */
+  --bg-card: 13 36 18;         /* #0d2412 */
+  --border-color: 27 77 37;    /* #1b4d25 Phosphor CRT border */
+  --text-main: 51 255 87;      /* #33ff57 Bright Green Phosphor */
+  --text-muted: 34 153 56;     /* #229938 Muted Phosphor Green */
+  text-shadow: 0 0 3px rgba(51, 255, 87, 0.45);
+  font-family: ui-monospace, 'Courier New', Courier, monospace !important;
+}
+
+/* CRT Scanlines and Screen Curvature Glow */
+html.theme-retro-crt body::before {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.03), rgba(0, 0, 255, 0.02));
+  z-index: 9999;
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+html.light, html.theme-light {
+  color-scheme: light;
+  --bg-main: 246 248 250;      /* #f6f8fa */
+  --bg-surface: 255 255 255;   /* #ffffff */
+  --bg-card: 240 242 245;      /* #f0f2f5 */
+  --border-color: 208 215 222; /* #d0d7de */
+  --text-main: 31 35 40;       /* #1f2328 */
+  --text-muted: 101 109 118;   /* #656d76 */
+}
+
+body {
+  background-color: rgb(var(--bg-main));
+  color: rgb(var(--text-main));
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Scrollbar Aesthetics */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border-color));
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #58a6ff;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
