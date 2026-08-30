@@ -77,8 +77,10 @@ export function App() {
     isLoadingRepos,
     currentLoadingRepoName,
     loadingProgress,
+    refreshingRepoId,
     error: statsError,
     refreshStats,
+    refreshSingleRepo,
   } = useRepoStats(
     isAuthenticated,
     isDemoMode,
@@ -224,6 +226,8 @@ export function App() {
                       key={st.repo.id}
                       stats={st}
                       onSelect={() => setSelectedDetailRepoId(st.repo.id)}
+                      onRefresh={refreshSingleRepo}
+                      isRefreshing={refreshingRepoId === st.repo.id}
                     />
                   ))}
                 </div>
@@ -258,6 +262,8 @@ export function App() {
                     key={st.repo.id}
                     stats={st}
                     onSelect={() => setSelectedDetailRepoId(st.repo.id)}
+                    onRefresh={refreshSingleRepo}
+                    isRefreshing={refreshingRepoId === st.repo.id}
                   />
                 ))}
               </div>
@@ -267,23 +273,26 @@ export function App() {
           {/* 3. TRENDS & ANALYTICS TAB */}
           {activeTab === 'trends' && (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-gh-text flex items-center gap-2">
-                  <TrendingUp size={20} className="text-gh-green" />
-                  Analytics & Velocity Trends
-                </h2>
-                <p className="text-xs text-gh-muted mt-0.5">
-                  Deep-dive visualizations for commit activity, release downloads, and issue resolutions
-                </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-gh-text flex items-center gap-2">
+                    <Sparkles size={20} className="text-gh-yellow" />
+                    Community Velocity & Trends
+                  </h2>
+                  <p className="text-xs text-gh-muted mt-0.5">
+                    Multi-repository cross-comparison and velocity analytics
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <CommitActivityChart data={commitTrendData} />
                 <StarForkComparisonChart data={starDistribution} />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <DownloadsBreakdownChart statsMap={trackedStats} />
-                  <IssuesPrRatioChart stats={aggregateStats} />
-                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <DownloadsBreakdownChart statsMap={trackedStats} />
+                <IssuesPrRatioChart stats={aggregateStats} />
               </div>
             </div>
           )}
@@ -299,7 +308,7 @@ export function App() {
       )}
 
       {/* MODALS */}
-      {/* 1. Repository Multi-Select Selector Modal */}
+      {/* 1. Repository Selection & Search Modal */}
       {isRepoSelectorOpen && (
         <RepoMultiSelector
           allRepos={allRepos}
@@ -321,6 +330,8 @@ export function App() {
       {activeDetailStats && (
         <RepoDetailModal
           stats={activeDetailStats}
+          onRefreshRepo={refreshSingleRepo}
+          isRefreshing={refreshingRepoId === activeDetailStats.repo.id}
           onClose={() => setSelectedDetailRepoId(null)}
         />
       )}

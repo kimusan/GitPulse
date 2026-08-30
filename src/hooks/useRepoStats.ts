@@ -102,6 +102,41 @@ export function useRepoStats(
     }
   }, [isAuthenticated, isDemoMode, trackedRepoIds, allRepos]);
 
+  const [refreshingRepoId, setRefreshingRepoId] = useState<number | null>(null);
+
+  // 3. Refresh statistics for a single repository
+  const refreshSingleRepo = useCallback(async (repoId: number) => {
+    if (!isAuthenticated) return;
+    setRefreshingRepoId(repoId);
+
+    try {
+      if (isDemoMode) {
+        // Quick subtle delay for visual tactile feedback
+        await new Promise(r => setTimeout(r, 450));
+        if (MOCK_DETAILED_STATS[repoId]) {
+          setDetailedStatsMap(prev => ({
+            ...prev,
+            [repoId]: { ...MOCK_DETAILED_STATS[repoId] }
+          }));
+        }
+      } else {
+        const targetRepo = allRepos.find(r => r.id === repoId) || detailedStatsMap[repoId]?.repo;
+        if (!targetRepo) return;
+
+        const detailed = await GitHubApiService.fetchCompleteRepoStats(targetRepo, true);
+        setDetailedStatsMap(prev => ({
+          ...prev,
+          [repoId]: detailed
+        }));
+      }
+      setLastUpdated(new Date());
+    } catch (err: unknown) {
+      console.error(`Failed to refresh repository ${repoId}:`, err);
+    } finally {
+      setRefreshingRepoId(null);
+    }
+  }, [isAuthenticated, isDemoMode, allRepos, detailedStatsMap]);
+
   useEffect(() => {
     fetchUserRepos();
   }, [fetchUserRepos]);
@@ -289,11 +324,13 @@ export function useRepoStats(
     isLoadingStats,
     currentLoadingRepoName,
     loadingProgress,
+    refreshingRepoId,
     error,
     lastUpdated,
     selectedRepoId,
     setSelectedRepoId,
     refreshRepos: fetchUserRepos,
     refreshStats: () => fetchTrackedStats(true),
+    refreshSingleRepo,
   };
 }

@@ -10,19 +10,25 @@ import {
   ChevronRight,
   Lock,
   GitCommit,
+  RefreshCw,
 } from 'lucide-react';
 import { RepoDetailedStats } from '../../types/stats';
 import { Badge } from '../common/Badge';
+import clsx from 'clsx';
 
 interface RepoListCardProps {
   stats: RepoDetailedStats;
   onSelect: () => void;
+  onRefresh?: (repoId: number) => void;
+  isRefreshing?: boolean;
   compact?: boolean;
 }
 
 export const RepoListCard: React.FC<RepoListCardProps> = ({
   stats,
   onSelect,
+  onRefresh,
+  isRefreshing = false,
   compact = false,
 }) => {
   const { repo, totalDownloads, openPullRequestsCount, openIssuesCount, discussionsCount } = stats;
@@ -77,9 +83,25 @@ export const RepoListCard: React.FC<RepoListCardProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-shrink-0 text-gh-muted group-hover:text-gh-blue transition-colors">
-          <span className="text-xs hidden sm:inline font-medium">Details</span>
-          <ChevronRight size={16} className="transform group-hover:translate-x-0.5 transition-transform" />
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation();
+                onRefresh(repo.id);
+              }}
+              disabled={isRefreshing}
+              className="p-1.5 rounded-lg text-gh-muted hover:text-gh-blue hover:bg-gh-card border border-transparent hover:border-gh-border/60 transition-all active:scale-95 disabled:opacity-50"
+              title={`Refresh ${repo.name} statistics`}
+            >
+              <RefreshCw size={13} className={clsx(isRefreshing && 'animate-spin text-gh-green')} />
+            </button>
+          )}
+          <div className="flex items-center gap-1 text-gh-muted group-hover:text-gh-blue transition-colors">
+            <span className="text-xs hidden sm:inline font-medium">Details</span>
+            <ChevronRight size={16} className="transform group-hover:translate-x-0.5 transition-transform" />
+          </div>
         </div>
       </div>
 

@@ -22,6 +22,7 @@ import {
   MessageCircle,
   ThumbsUp,
   Filter,
+  RefreshCw,
 } from 'lucide-react';
 import { RepoDetailedStats } from '../../types/stats';
 import { ThreadComment } from '../../types/github';
@@ -39,13 +40,20 @@ import clsx from 'clsx';
 interface RepoDetailModalProps {
   stats: RepoDetailedStats;
   onClose: () => void;
+  onRefreshRepo?: (repoId: number) => void;
+  isRefreshing?: boolean;
 }
 
 type DetailTab = 'overview' | 'releases' | 'pulls' | 'issues' | 'discussions' | 'contributors';
 type PRFilterType = 'all' | 'open' | 'merged';
 type IssueFilterType = 'all' | 'open' | 'closed';
 
-export const RepoDetailModal: React.FC<RepoDetailModalProps> = ({ stats, onClose }) => {
+export const RepoDetailModal: React.FC<RepoDetailModalProps> = ({
+  stats,
+  onClose,
+  onRefreshRepo,
+  isRefreshing = false,
+}) => {
   const [activeTab, setActiveTab] = useState<DetailTab>('overview');
   const [prFilter, setPrFilter] = useState<PRFilterType>('all');
   const [issueFilter, setIssueFilter] = useState<IssueFilterType>('all');
@@ -179,6 +187,17 @@ export const RepoDetailModal: React.FC<RepoDetailModalProps> = ({ stats, onClose
             </div>
 
             <div className="flex items-center gap-2 flex-shrink-0">
+              {onRefreshRepo && (
+                <button
+                  onClick={() => onRefreshRepo(repo.id)}
+                  disabled={isRefreshing}
+                  className="px-3 py-1.5 bg-gh-surface hover:bg-gh-card border border-gh-border text-gh-text rounded-xl transition-all active:scale-95 text-xs font-semibold flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                  title="Refresh statistics for this repository"
+                >
+                  <RefreshCw size={12} className={clsx(isRefreshing && 'animate-spin text-gh-green')} />
+                  <span className="hidden sm:inline">{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+                </button>
+              )}
               <a
                 href={repo.html_url}
                 target="_blank"
@@ -190,6 +209,7 @@ export const RepoDetailModal: React.FC<RepoDetailModalProps> = ({ stats, onClose
               <button
                 onClick={onClose}
                 className="p-1.5 rounded-xl text-gh-muted hover:text-gh-text hover:bg-gh-card transition-colors"
+                title="Close"
               >
                 <X size={20} />
               </button>
