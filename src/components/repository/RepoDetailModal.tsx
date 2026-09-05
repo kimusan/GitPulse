@@ -235,7 +235,7 @@ export const RepoDetailModal: React.FC<RepoDetailModalProps> = ({
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gh-surface border border-gh-border/60">
               <Eye size={13} className="text-gh-purple" />
-              <span className="font-bold text-gh-text">{repo.watchers_count.toLocaleString()}</span>
+              <span className="font-bold text-gh-text">{(repo.subscribers_count ?? repo.watchers_count).toLocaleString()}</span>
               <span className="text-gh-muted">Watchers</span>
             </div>
           </div>

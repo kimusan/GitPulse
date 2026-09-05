@@ -113,7 +113,7 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({
         <StatCard
           title="Total Forks"
           value={stats.totalForks}
-          subtitle={`${stats.totalWatchers} subscribers`}
+          subtitle={`${stats.totalWatchers} watchers`}
           icon={GitFork}
           color="pink"
           compact={compact}

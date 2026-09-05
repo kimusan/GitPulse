@@ -128,6 +128,7 @@ export function useRepoStats(
           ...prev,
           [repoId]: detailed
         }));
+        setAllRepos(prev => prev.map(r => r.id === repoId ? detailed.repo : r));
       }
       setLastUpdated(new Date());
     } catch (err: unknown) {
@@ -222,7 +223,7 @@ export function useRepoStats(
       totalDiscussions += st.discussionsCount || 0;
       totalDiscussionComments += st.discussionCommentsCount || 0;
       totalCommitsYear += st.totalCommitsLastYear || 0;
-      totalWatchers += st.repo.watchers_count || 0;
+      totalWatchers += st.repo.subscribers_count ?? st.repo.watchers_count ?? 0;
 
       if (Array.isArray(st.contributors)) {
         st.contributors.forEach(c => contributorLogins.add(c.login));

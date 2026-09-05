@@ -311,6 +311,19 @@ export class GitHubApiService {
     }
   }
 
+  static async getRepoDetails(owner: string, repo: string): Promise<Partial<GitHubRepository> | null> {
+    try {
+      const res = await fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}`, {
+        headers: this.getHeaders()
+      });
+      this.parseRateLimit(res);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
   static async fetchCompleteRepoStats(repository: GitHubRepository, forceRefresh = false): Promise<RepoDetailedStats> {
     if (StorageService.isDemoMode()) {
       return MOCK_DETAILED_STATS[repository.id] || {
@@ -344,6 +357,7 @@ export class GitHubApiService {
     const name = repository.name;
 
     const [
+      repoDetails,
       releasesData,
       commitData,
       prData,
@@ -353,6 +367,7 @@ export class GitHubApiService {
       contributorsData,
       discussionsData
     ] = await Promise.all([
+      this.getRepoDetails(owner, name),
       this.getRepoReleases(owner, name),
       this.getRepoCommitActivity(owner, name),
       this.getRepoPullRequests(owner, name),
@@ -363,15 +378,19 @@ export class GitHubApiService {
       GitHubGraphQLService.fetchDiscussions(owner, name)
     ]);
 
+    const updatedRepo: GitHubRepository = repoDetails
+      ? { ...repository, ...repoDetails }
+      : repository;
+
     const detailed: RepoDetailedStats = {
-      repo: repository,
+      repo: updatedRepo,
       releases: releasesData.releases,
       totalDownloads: releasesData.totalDownloads,
       openPullRequestsCount: prData.openCount,
       closedPullRequestsCount: prData.closedCount,
       mergedPullRequestsCount: prData.mergedCount,
       pullRequests: prData.list,
-      openIssuesCount: issueData.openCount || repository.open_issues_count,
+      openIssuesCount: issueData.openCount || updatedRepo.open_issues_count,
       closedIssuesCount: issueData.closedCount,
       issues: issueData.list,
       discussionsCount: discussionsData.discussionsCount,
