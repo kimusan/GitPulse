@@ -1,5 +1,5 @@
 import { GitHubUser, GitHubRepository } from '../types/github';
-import { RepoDetailedStats, AggregateStats } from '../types/stats';
+import { RepoDetailedStats, AggregateStats, StarHistoryPoint } from '../types/stats';
 
 export const MOCK_USER: GitHubUser = {
   id: 4289102,
@@ -192,6 +192,44 @@ function generateCommitWeeks(): { days: number[]; total: number; week: number }[
     weeks.push({ days, total, week: weekStart });
   }
   return weeks;
+}
+
+// Realistic star history points over time
+export function generateStarHistory(
+  createdAt: string,
+  totalStars: number,
+  contributorLogins: string[] = ['octodev', 'rustacean99', 'linuxguru', 'pixelartist', 'webdev_pro', 'cloudninja']
+): StarHistoryPoint[] {
+  const points: StarHistoryPoint[] = [];
+  const start = new Date(createdAt).getTime();
+  const now = Date.now();
+  const timespan = now - start;
+
+  points.push({ date: createdAt, stars: 0 });
+
+  const numSteps = 24;
+  for (let i = 1; i <= numSteps; i++) {
+    const progress = i / numSteps;
+    const factor = Math.pow(progress, 1.35);
+    const starCount = Math.min(totalStars, Math.max(1, Math.round(totalStars * factor)));
+    const timestamp = new Date(start + timespan * progress).toISOString();
+
+    const login = contributorLogins[(i - 1) % contributorLogins.length];
+    points.push({
+      date: timestamp,
+      stars: starCount,
+      user: {
+        login,
+        avatar_url: `https://images.unsplash.com/photo-${1534528741775 + (i * 1000)}?w=100`
+      }
+    });
+  }
+
+  if (points[points.length - 1].stars !== totalStars) {
+    points.push({ date: new Date().toISOString(), stars: totalStars });
+  }
+
+  return points;
 }
 
 export const MOCK_DETAILED_STATS: Record<number, RepoDetailedStats> = {
@@ -549,6 +587,7 @@ export const MOCK_DETAILED_STATS: Record<number, RepoDetailedStats> = {
       { id: 3, login: 'linuxguru', avatar_url: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100', contributions: 94, html_url: 'https://github.com/linuxguru' },
       { id: 4, login: 'pixelartist', avatar_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100', contributions: 52, html_url: 'https://github.com/pixelartist' }
     ],
+    starHistory: generateStarHistory(MOCK_REPOSITORIES[0].created_at, MOCK_REPOSITORIES[0].stargazers_count),
     lastFetched: Date.now()
   },
   102: {
@@ -657,6 +696,7 @@ export const MOCK_DETAILED_STATS: Record<number, RepoDetailedStats> = {
       { id: 1, login: 'octodev', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100', contributions: 340, html_url: 'https://github.com/octodev' },
       { id: 5, login: 'designgeek', avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100', contributions: 86, html_url: '#' }
     ],
+    starHistory: generateStarHistory(MOCK_REPOSITORIES[1].created_at, MOCK_REPOSITORIES[1].stargazers_count),
     lastFetched: Date.now()
   },
   103: {
@@ -706,6 +746,7 @@ export const MOCK_DETAILED_STATS: Record<number, RepoDetailedStats> = {
     contributors: [
       { id: 1, login: 'octodev', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100', contributions: 240, html_url: '#' }
     ],
+    starHistory: generateStarHistory(MOCK_REPOSITORIES[2].created_at, MOCK_REPOSITORIES[2].stargazers_count),
     lastFetched: Date.now()
   },
   104: {
@@ -755,6 +796,7 @@ export const MOCK_DETAILED_STATS: Record<number, RepoDetailedStats> = {
     contributors: [
       { id: 1, login: 'octodev', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100', contributions: 180, html_url: '#' }
     ],
+    starHistory: generateStarHistory(MOCK_REPOSITORIES[3].created_at, MOCK_REPOSITORIES[3].stargazers_count),
     lastFetched: Date.now()
   },
   105: {
@@ -804,6 +846,7 @@ export const MOCK_DETAILED_STATS: Record<number, RepoDetailedStats> = {
     contributors: [
       { id: 1, login: 'octodev', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100', contributions: 290, html_url: '#' }
     ],
+    starHistory: generateStarHistory(MOCK_REPOSITORIES[4].created_at, MOCK_REPOSITORIES[4].stargazers_count),
     lastFetched: Date.now()
   }
 };

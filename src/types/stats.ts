@@ -1,5 +1,14 @@
 import { GitHubRepository, GitHubRelease, CommitActivityWeek, TrafficViewsData, TrafficClonesData, PullRequestSummary, IssueSummary, DiscussionSummary, Contributor, LanguageBytes } from './github';
 
+export interface StarHistoryPoint {
+  date: string;
+  stars: number;
+  user?: {
+    login: string;
+    avatar_url: string;
+  };
+}
+
 export interface RepoDetailedStats {
   repo: GitHubRepository;
   releases: GitHubRelease[];
@@ -20,6 +29,7 @@ export interface RepoDetailedStats {
   trafficClones?: TrafficClonesData | null;
   languages: LanguageBytes;
   contributors: Contributor[];
+  starHistory?: StarHistoryPoint[];
   lastFetched: number;
 }
 

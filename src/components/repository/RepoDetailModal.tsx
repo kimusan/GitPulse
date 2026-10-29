@@ -23,6 +23,7 @@ import {
   ThumbsUp,
   Filter,
   RefreshCw,
+  Award,
 } from 'lucide-react';
 import { RepoDetailedStats } from '../../types/stats';
 import { ThreadComment } from '../../types/github';
@@ -31,6 +32,7 @@ import { ReleasesTable } from './ReleasesTable';
 import { LanguageDistributionChart } from '../charts/LanguageDistributionChart';
 import { TrafficViewsChart } from '../charts/TrafficViewsChart';
 import { RepoReleaseDownloadsChart } from '../charts/RepoReleaseDownloadsChart';
+import { RepoStarHistoryChart } from '../charts/RepoStarHistoryChart';
 import { RepoCommitChart } from '../charts/RepoCommitChart';
 import { RepoPrIssueFlowChart } from '../charts/RepoPrIssueFlowChart';
 import { parseEmoji } from '../common/emojiParser';
@@ -44,7 +46,7 @@ interface RepoDetailModalProps {
   isRefreshing?: boolean;
 }
 
-type DetailTab = 'overview' | 'releases' | 'pulls' | 'issues' | 'discussions' | 'contributors';
+type DetailTab = 'overview' | 'stars' | 'releases' | 'pulls' | 'issues' | 'discussions' | 'contributors';
 type PRFilterType = 'all' | 'open' | 'merged';
 type IssueFilterType = 'all' | 'open' | 'closed';
 
@@ -72,6 +74,7 @@ export const RepoDetailModal: React.FC<RepoDetailModalProps> = ({
 
   const tabs: { id: DetailTab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: 'overview', label: 'Overview', icon: <Layers size={14} /> },
+    { id: 'stars', label: 'Stars History', icon: <Star size={14} className="text-gh-yellow fill-gh-yellow/30" />, badge: repo.stargazers_count },
     { id: 'releases', label: 'Releases & Downloads', icon: <Download size={14} />, badge: stats.releases.length },
     { id: 'pulls', label: 'Pull Requests', icon: <GitPullRequest size={14} />, badge: stats.openPullRequestsCount },
     { id: 'issues', label: 'Issues', icon: <AlertCircle size={14} />, badge: stats.openIssuesCount },
@@ -218,16 +221,36 @@ export const RepoDetailModal: React.FC<RepoDetailModalProps> = ({
 
           {/* KPI Snapshot Pills */}
           <div className="flex items-center gap-2 sm:gap-4 mt-4 overflow-x-auto pb-1 text-xs no-scrollbar">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gh-surface border border-gh-border/60">
-              <Star size={13} className="text-gh-blue" />
-              <span className="font-bold text-gh-text">{repo.stargazers_count.toLocaleString()}</span>
+            <button
+              type="button"
+              onClick={() => setActiveTab('stars')}
+              className={clsx(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all text-left active:scale-95',
+                activeTab === 'stars'
+                  ? 'bg-gh-yellow/20 border-gh-yellow/60 text-gh-text shadow-sm'
+                  : 'bg-gh-surface border-gh-border/60 hover:border-gh-yellow/50 text-gh-text'
+              )}
+              title="View Stars History"
+            >
+              <Star size={13} className="text-gh-yellow fill-gh-yellow/40" />
+              <span className="font-bold">{repo.stargazers_count.toLocaleString()}</span>
               <span className="text-gh-muted">Stars</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gh-surface border border-gh-border/60">
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('releases')}
+              className={clsx(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all text-left active:scale-95',
+                activeTab === 'releases'
+                  ? 'bg-gh-green/20 border-gh-green/60 text-gh-text shadow-sm'
+                  : 'bg-gh-surface border-gh-border/60 hover:border-gh-green/50 text-gh-text'
+              )}
+              title="View Releases & Downloads"
+            >
               <Download size={13} className="text-gh-green" />
-              <span className="font-bold text-gh-text">{stats.totalDownloads.toLocaleString()}</span>
+              <span className="font-bold">{stats.totalDownloads.toLocaleString()}</span>
               <span className="text-gh-muted">Downloads</span>
-            </div>
+            </button>
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gh-surface border border-gh-border/60">
               <GitFork size={13} className="text-gh-pink" />
               <span className="font-bold text-gh-text">{repo.forks_count.toLocaleString()}</span>
@@ -275,6 +298,14 @@ export const RepoDetailModal: React.FC<RepoDetailModalProps> = ({
           {/* 1. OVERVIEW TAB */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
+              {/* Stars Over Time Plot */}
+              <RepoStarHistoryChart
+                starHistory={stats.starHistory}
+                repoName={repo.name}
+                totalStars={repo.stargazers_count}
+                createdAt={repo.created_at}
+              />
+
               {/* Release Downloads Plot (Downloads per release tag) */}
               <RepoReleaseDownloadsChart releases={stats.releases} />
 
@@ -335,7 +366,80 @@ export const RepoDetailModal: React.FC<RepoDetailModalProps> = ({
             </div>
           )}
 
-          {/* 2. RELEASES TAB */}
+          {/* 2. STARS HISTORY TAB */}
+          {activeTab === 'stars' && (
+            <div className="space-y-6">
+              {/* Stars Over Time Plot */}
+              <RepoStarHistoryChart
+                starHistory={stats.starHistory}
+                repoName={repo.name}
+                totalStars={repo.stargazers_count}
+                createdAt={repo.created_at}
+              />
+
+              {/* Star Milestones & Progress */}
+              {(() => {
+                const milestoneThresholds = [1, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000];
+                const currentStars = repo.stargazers_count;
+                const nextMilestone = milestoneThresholds.find(m => m > currentStars) || (currentStars * 2);
+                const prevMilestone = [...milestoneThresholds].reverse().find(m => m <= currentStars) || 0;
+                const milestoneProgress = Math.min(100, Math.max(0, Math.round(((currentStars - prevMilestone) / (nextMilestone - prevMilestone)) * 100)));
+
+                return (
+                  <div className="bg-gh-surface/80 border border-gh-border/80 rounded-2xl p-4 sm:p-5 backdrop-blur-sm space-y-4">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <Award size={18} className="text-gh-yellow" />
+                        <div>
+                          <h4 className="text-sm font-bold text-gh-text">
+                            Next Target: {nextMilestone.toLocaleString()} Stars
+                          </h4>
+                          <p className="text-xs text-gh-muted">
+                            {nextMilestone - currentStars} more stars needed to unlock next milestone
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-mono font-bold text-gh-yellow px-2.5 py-1 rounded-xl bg-gh-yellow/15 border border-gh-yellow/30">
+                        {milestoneProgress}% to {nextMilestone}
+                      </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gh-card h-2.5 rounded-full overflow-hidden border border-gh-border/50">
+                      <div
+                        className="bg-gradient-to-r from-gh-yellow to-gh-green h-full rounded-full transition-all duration-500"
+                        style={{ width: `${milestoneProgress}%` }}
+                      />
+                    </div>
+
+                    {/* Milestone Badges Row */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 pt-2">
+                      {milestoneThresholds.slice(0, 6).map(m => {
+                        const isReached = currentStars >= m;
+                        return (
+                          <div
+                            key={m}
+                            className={clsx(
+                              'p-2.5 rounded-xl border flex flex-col items-center justify-center text-center transition-all',
+                              isReached
+                                ? 'bg-gh-yellow/10 border-gh-yellow/40 text-gh-text'
+                                : 'bg-gh-card/40 border-gh-border/40 text-gh-muted opacity-60'
+                            )}
+                          >
+                            <Star size={14} className={clsx(isReached ? 'fill-gh-yellow text-gh-yellow' : 'text-gh-muted')} />
+                            <span className="text-xs font-bold mt-1 font-mono">{m.toLocaleString()}</span>
+                            <span className="text-[10px] text-gh-muted">{isReached ? 'Reached' : 'Upcoming'}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* 3. RELEASES TAB */}
           {activeTab === 'releases' && (
             <div className="space-y-6">
               <RepoReleaseDownloadsChart releases={stats.releases} />

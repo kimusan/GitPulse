@@ -1,5 +1,5 @@
 import { GitHubUser, GitHubRepository, GitHubRelease, PullRequestSummary, IssueSummary, DiscussionSummary, ThreadComment, CommitActivityWeek, TrafficViewsData, TrafficClonesData, LanguageBytes, Contributor, RateLimitStatus } from '../types/github';
-import { RepoDetailedStats } from '../types/stats';
+import { RepoDetailedStats, StarHistoryPoint } from '../types/stats';
 import { StorageService } from './storageService';
 import { MOCK_USER, MOCK_REPOSITORIES, MOCK_DETAILED_STATS } from './mockDataService';
 import { GitHubGraphQLService } from './githubGraphQL';
@@ -324,6 +324,219 @@ export class GitHubApiService {
     }
   }
 
+  private static parseLastPageFromLinkHeader(linkHeader: string | null): number {
+    if (!linkHeader) return 1;
+    const match = linkHeader.match(/page=(\d+)>;\s*rel="last"/);
+    return match ? parseInt(match[1], 10) : 1;
+  }
+
+  private static generateFallbackStarHistory(createdAt: string, totalStars: number): StarHistoryPoint[] {
+    const points: StarHistoryPoint[] = [];
+    points.push({ date: createdAt, stars: 0 });
+
+    if (totalStars > 0) {
+      const start = new Date(createdAt).getTime();
+      const now = Date.now();
+      const diff = now - start;
+      const steps = Math.min(12, totalStars);
+      for (let i = 1; i <= steps; i++) {
+        const factor = Math.pow(i / steps, 1.4);
+        const count = Math.min(totalStars, Math.max(1, Math.round(totalStars * factor)));
+        points.push({
+          date: new Date(start + diff * (i / steps)).toISOString(),
+          stars: count
+        });
+      }
+      if (points[points.length - 1].stars !== totalStars) {
+        points.push({ date: new Date().toISOString(), stars: totalStars });
+      }
+    }
+
+    return points;
+  }
+
+  static async getRepoStarHistory(
+    owner: string,
+    repo: string,
+    totalStars: number,
+    createdAt: string
+  ): Promise<StarHistoryPoint[]> {
+    if (totalStars <= 0) {
+      return [{ date: createdAt, stars: 0 }];
+    }
+
+    try {
+      const starHeaders = {
+        ...this.getHeaders(),
+        'Accept': 'application/vnd.github.star+json',
+      };
+
+      // 1. Fetch First Page (up to 100 stars)
+      const firstRes = await fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/stargazers?per_page=100&page=1`, {
+        headers: starHeaders
+      });
+      this.parseRateLimit(firstRes);
+
+      if (!firstRes.ok) {
+        return this.generateFallbackStarHistory(createdAt, totalStars);
+      }
+
+      const firstPageData = await firstRes.json();
+      if (!Array.isArray(firstPageData) || firstPageData.length === 0) {
+        return this.generateFallbackStarHistory(createdAt, totalStars);
+      }
+
+      const linkHeader = firstRes.headers.get('Link');
+      const lastPage = this.parseLastPageFromLinkHeader(linkHeader);
+
+      // If everything fits on page 1 (<= 100 stars)
+      if (lastPage <= 1) {
+        const points: StarHistoryPoint[] = [{ date: createdAt, stars: 0 }];
+        firstPageData.forEach((item: any, idx: number) => {
+          if (item?.starred_at) {
+            points.push({
+              date: item.starred_at,
+              stars: idx + 1,
+              user: item.user ? { login: item.user.login, avatar_url: item.user.avatar_url } : undefined
+            });
+          }
+        });
+        if (points.length > 0 && points[points.length - 1].stars < totalStars) {
+          points.push({ date: new Date().toISOString(), stars: totalStars });
+        }
+        return points;
+      }
+
+      // If between 2 and 4 pages (101 to 400 stars)
+      if (lastPage <= 4) {
+        const remainingPages = Array.from({ length: lastPage - 1 }, (_, i) => i + 2);
+        const pageResponses = await Promise.all(
+          remainingPages.map(async p => {
+            try {
+              const res = await fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/stargazers?per_page=100&page=${p}`, {
+                headers: starHeaders
+              });
+              this.parseRateLimit(res);
+              if (res.ok) {
+                const list = await res.json();
+                return Array.isArray(list) ? list : [];
+              }
+            } catch {}
+            return [];
+          })
+        );
+
+        const allItems = [...firstPageData];
+        pageResponses.forEach(list => allItems.push(...list));
+
+        const points: StarHistoryPoint[] = [{ date: createdAt, stars: 0 }];
+        allItems.forEach((item: any, idx: number) => {
+          if (item?.starred_at) {
+            points.push({
+              date: item.starred_at,
+              stars: idx + 1,
+              user: item.user ? { login: item.user.login, avatar_url: item.user.avatar_url } : undefined
+            });
+          }
+        });
+        if (points[points.length - 1].stars < totalStars) {
+          points.push({ date: new Date().toISOString(), stars: totalStars });
+        }
+        return points;
+      }
+
+      // If > 4 pages: sample up to 10-12 pages evenly to conserve rate limits
+      const samplePageCount = Math.min(12, lastPage);
+      const pageIndices = new Set<number>();
+      pageIndices.add(lastPage);
+      for (let i = 2; i < samplePageCount; i++) {
+        const p = Math.max(2, Math.min(lastPage - 1, Math.round((i / (samplePageCount - 1)) * lastPage)));
+        pageIndices.add(p);
+      }
+      const sortedPages = Array.from(pageIndices).sort((a, b) => a - b);
+
+      const sampledResponses = await Promise.all(
+        sortedPages.map(async p => {
+          try {
+            const res = await fetch(`${this.getBaseUrl()}/repos/${owner}/${repo}/stargazers?per_page=100&page=${p}`, {
+              headers: starHeaders
+            });
+            this.parseRateLimit(res);
+            if (res.ok) {
+              const list = await res.json();
+              return { page: p, list: Array.isArray(list) ? list : [] };
+            }
+          } catch {}
+          return { page: p, list: [] };
+        })
+      );
+
+      const points: StarHistoryPoint[] = [{ date: createdAt, stars: 0 }];
+
+      // Take sample from first page
+      const stepFirst = Math.max(1, Math.floor(firstPageData.length / 5));
+      for (let i = 0; i < firstPageData.length; i += stepFirst) {
+        const item = firstPageData[i];
+        if (item?.starred_at) {
+          points.push({
+            date: item.starred_at,
+            stars: i + 1,
+            user: item.user ? { login: item.user.login, avatar_url: item.user.avatar_url } : undefined
+          });
+        }
+      }
+
+      // Add sampled pages
+      sampledResponses.forEach(({ page, list }) => {
+        if (list.length > 0) {
+          const step = Math.max(1, Math.floor(list.length / 3));
+          for (let i = 0; i < list.length; i += step) {
+            const item = list[i];
+            if (item?.starred_at) {
+              const starCount = Math.min(totalStars, (page - 1) * 100 + i + 1);
+              points.push({
+                date: item.starred_at,
+                stars: starCount,
+                user: item.user ? { login: item.user.login, avatar_url: item.user.avatar_url } : undefined
+              });
+            }
+          }
+          const lastItem = list[list.length - 1];
+          if (lastItem?.starred_at) {
+            const starCount = Math.min(totalStars, (page - 1) * 100 + list.length);
+            points.push({
+              date: lastItem.starred_at,
+              stars: starCount,
+              user: lastItem.user ? { login: lastItem.user.login, avatar_url: lastItem.user.avatar_url } : undefined
+            });
+          }
+        }
+      });
+
+      // Always terminate with totalStars at current time
+      points.push({ date: new Date().toISOString(), stars: totalStars });
+
+      // Sort points chronologically
+      points.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      // Deduplicate points with identical timestamps
+      const uniquePoints: StarHistoryPoint[] = [];
+      const seenDates = new Set<string>();
+      points.forEach(p => {
+        const key = p.date.split('T')[0] + '-' + p.stars;
+        if (!seenDates.has(key)) {
+          seenDates.add(key);
+          uniquePoints.push(p);
+        }
+      });
+
+      return uniquePoints.length > 1 ? uniquePoints : this.generateFallbackStarHistory(createdAt, totalStars);
+    } catch (err) {
+      console.warn(`Failed to fetch star history for ${owner}/${repo}:`, err);
+      return this.generateFallbackStarHistory(createdAt, totalStars);
+    }
+  }
+
   static async fetchCompleteRepoStats(repository: GitHubRepository, forceRefresh = false): Promise<RepoDetailedStats> {
     if (StorageService.isDemoMode()) {
       return MOCK_DETAILED_STATS[repository.id] || {
@@ -344,6 +557,7 @@ export class GitHubApiService {
         totalCommitsLastYear: 0,
         languages: repository.language ? { [repository.language]: 10000 } : {},
         contributors: [],
+        starHistory: [],
         lastFetched: Date.now()
       };
     }
@@ -365,7 +579,8 @@ export class GitHubApiService {
       trafficData,
       languagesData,
       contributorsData,
-      discussionsData
+      discussionsData,
+      starHistoryData
     ] = await Promise.all([
       this.getRepoDetails(owner, name),
       this.getRepoReleases(owner, name),
@@ -375,7 +590,8 @@ export class GitHubApiService {
       this.getRepoTraffic(owner, name),
       this.getRepoLanguages(owner, name),
       this.getRepoContributors(owner, name),
-      GitHubGraphQLService.fetchDiscussions(owner, name)
+      GitHubGraphQLService.fetchDiscussions(owner, name),
+      this.getRepoStarHistory(owner, name, repository.stargazers_count, repository.created_at)
     ]);
 
     const updatedRepo: GitHubRepository = repoDetails
@@ -402,6 +618,7 @@ export class GitHubApiService {
       trafficClones: trafficData.clones,
       languages: languagesData,
       contributors: contributorsData,
+      starHistory: starHistoryData,
       lastFetched: Date.now()
     };
 
